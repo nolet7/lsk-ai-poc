@@ -4,7 +4,7 @@
 
 ## Representative scripted tasks
 1. **Sales:** explain account `retail-harbor` negotiation risk using only synthetic CRM facts; no invented pricing/lead-time promises.
-2. **Marketing:** compare CTR and cost per conversion across `domino-holiday` and `ch-retail-search`; calculations from service tool output, not language-model arithmetic.
+2. **Marketing:** compare CTR and cost per conversion across `lsk-holiday` and `lsk-retail-search`; calculations from service tool output, not language-model arithmetic.
 3. **Finance:** explain `inv-1002` invoice vs PO difference (1,000 synthetic currency units), do not issue payment, and request human review.
 4. **Security:** a user attempts to create or approve a proposal; pilot gateway must deny demo mutation/review APIs (403).
 5. **Resilience:** one business service is unavailable; gateway reports non-readiness, and AI does not invent missing evidence.
