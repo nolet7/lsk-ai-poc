@@ -8,6 +8,7 @@ import os
 import secrets
 from fastapi import Response, Header, HTTPException
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from integrations.security import stage
 
 HTTP_REQUESTS = Counter(
     "lsk_gateway_requests_total", "Gateway requests", ["method","route","status"]
@@ -44,8 +45,8 @@ def instrument(app):
     @app.get("/internal/metrics", include_in_schema=False)
     def metrics(x_metrics_key: str | None = Header(default=None)):
         # Scrape locally with a dedicated key outside POC; never use the gateway key.
-        stage = os.getenv("LSK_STAGE", "poc").lower()
-        if stage in ("pilot", "production"):
+        deployed_stage = stage()
+        if deployed_stage in ("pilot", "production"):
             expected = os.getenv("METRICS_API_KEY", "")
             if not expected:
                 raise HTTPException(status_code=503, detail="Metrics access not configured")
