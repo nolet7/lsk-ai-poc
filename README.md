@@ -1,4 +1,7 @@
-# Production AI Platform — Fully Commented Code
+# LSK Enterprise AI Enablement — Controlled Pilot Scaffold
+
+> **NOT AN APPROVED PILOT DEPLOYMENT.** ASR Group-inspired commercial portfolio simulation with synthetic records only. No verified corporate identity, actual user pilot, or production business integration exists. Review [release gates](docs/RELEASE_AUDIT.md) and [commercial AI implementation](docs/ASR_COMMERCIAL_AI.md). The Bedrock/LangGraph agent is available for **read-only evaluation** when model access is configured; demo writes/review endpoints are disabled. Pilot promotion requires verified OIDC/RBAC, evaluation outcomes and business signoff.
+
 
 ## Integrated business applications (Sales · Marketing · Finance)
 
