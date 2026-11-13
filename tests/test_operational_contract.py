@@ -37,6 +37,13 @@ class OperationsTests(unittest.TestCase):
         self.assertIn("Commercial AI Assistant", response.text)
         self.assertIn("allow_proposals:false", response.text)
 
+    def test_pilot_metrics_require_dedicated_key(self):
+        with patch.dict(os.environ, {"LSK_STAGE":"pilot","METRICS_API_KEY":"metrics-secret"}, clear=True):
+            denied=self.client.get("/internal/metrics")
+            allowed=self.client.get("/internal/metrics",headers={"X-Metrics-Key":"metrics-secret"})
+        self.assertEqual(denied.status_code,401)
+        self.assertEqual(allowed.status_code,200)
+
     def test_metrics_do_not_require_customer_credentials(self):
         response=self.client.get("/internal/metrics")
         self.assertEqual(response.status_code,200)
