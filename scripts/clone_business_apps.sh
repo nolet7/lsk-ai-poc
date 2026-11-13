@@ -14,4 +14,4 @@ for spec in "lsk-sales-account:$SALES_COMMIT" "lsk-marketing:$MARKETING_COMMIT" 
     echo "Checked out pinned $name revision $commit"
   fi
 done
-echo "Start without Docker: bash scripts/start_asr_services.sh (if installed on branch)."
+echo "Start without Docker: bash scripts/start_lsk_services.sh (if installed on branch)."

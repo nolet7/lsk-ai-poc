@@ -13,7 +13,7 @@ EnvironmentFile=/etc/lsk-ai/stage.env
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=APP_DOMAIN=marketing
 Environment=APP_DB_PATH=/var/lib/lsk-ai/marketing/app.sqlite3
-ExecStart=/opt/lsk-ai-poc/.venv-asr/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8102
+ExecStart=/opt/lsk-ai-poc/.venv-lsk/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8102
 Restart=on-failure
 RestartSec=3
 TimeoutStopSec=15

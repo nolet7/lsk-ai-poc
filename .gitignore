@@ -15,6 +15,6 @@ external/
 .env.business
 infrastructure/config.env
 
-# Native Python ASR commercial demo
-.venv-asr/
-.run-asr/
+# Native Python LSK commercial demo
+.venv-lsk/
+.run-lsk/
