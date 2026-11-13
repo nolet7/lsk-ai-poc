@@ -1,0 +1,5 @@
+A production AI platform should include a FastAPI backend, agent orchestration, retrieval-augmented generation, tool integration, evaluation, monitoring, logging, and secure deployment practices.
+
+Multi-agent workflows can divide complex tasks into planning, research, analysis, writing, and review.
+
+Production systems should include health checks and observability.

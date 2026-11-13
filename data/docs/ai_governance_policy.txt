@@ -1,0 +1,5 @@
+Enterprise AI systems must include access control, audit logging, human approval workflows for high-risk actions, model evaluation, retrieval validation, and production monitoring.
+
+AI governance requires clear ownership, documented risk controls, privacy safeguards, and escalation paths for incidents.
+
+High-risk AI decisions should include human review before execution.

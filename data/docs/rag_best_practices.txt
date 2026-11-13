@@ -1,0 +1,5 @@
+RAG systems improve reliability by retrieving relevant enterprise knowledge before generating an answer.
+
+Good RAG systems require document ingestion, chunking, embeddings, vector search, source metadata, retrieval validation, and evaluation.
+
+RAG should be monitored for retrieval quality, answer grounding, latency, and user feedback.
