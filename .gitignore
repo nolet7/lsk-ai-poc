@@ -22,3 +22,7 @@ htmlcov/
 data/chroma_db/
 data/outputs/*
 !data/outputs/.gitkeep
+
+# Local checkouts and integration secrets
+external/
+.env.business
