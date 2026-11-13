@@ -1,8 +1,10 @@
 """FastAPI business workflow. Synthetic accounts only; no external CRM writes."""
 import os
+from pathlib import Path
 import secrets
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sales_enablement import intelligence, store
 
@@ -80,3 +82,8 @@ def decide(approval_id: str,payload: Decision,actor: str=Depends(reviewer)):
 @app.get("/audit-events")
 def audit_events(actor: str=Depends(reviewer)):
     return store.list_events()
+
+@app.get("/portal", include_in_schema=False)
+def portal():
+    """Serve the synthetic internal demo portal."""
+    return FileResponse(Path(__file__).with_name("portal.html"))
