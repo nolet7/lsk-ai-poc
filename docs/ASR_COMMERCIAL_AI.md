@@ -63,7 +63,7 @@ The old `POST /run` report graph is retained as a separate legacy deterministic 
 
 Requirements: AWS EC2 instance and secured SSH tunnel, Python 3.12, outbound HTTPS, permission to invoke an available model through Bedrock (prefer an **EC2 instance profile** with least-privilege Bedrock permissions; never copy CLI keys to the server). Select an available, supported Bedrock Claude model or inference profile ID in the intended region. Model IDs, region availability and billing vary; no hardcoded assumption about access.
 
-Clone `lsk-ai-poc` on its `poc` branch then run `bash scripts/clone_business_apps.sh`. Use a virtual environment:
+Clone `lsk-ai-poc` on its `poc` branch then run `bash scripts/clone_business_apps.sh`. **Recommended:** copy `.env.business.example` to `.env.business`, set distinct random gateway and business API keys, set `BEDROCK_MODEL_ID` in your shell, then run `bash scripts/start_asr_services.sh` from the central project root. That script creates a separate Python environment and starts all four services on localhost without Docker. Check `.run-asr/*.log`, and stop using `bash scripts/stop_asr_services.sh`. If you already have SQLite files from previous test runs, updating seed JSON does not overwrite those existing records. For manual setup, use a virtual environment:
 
 ```bash
 python3 -m venv ~/lsk-venv
