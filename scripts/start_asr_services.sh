@@ -32,7 +32,7 @@ if [[ -x "$VENV/bin/python" ]]; then
 else
   VENV_PYTHON="$VENV/Scripts/python.exe"
 fi
-"$VENV_PYTHON" -m pip install -q "fastapi>=0.115,<1" "uvicorn>=0.30,<1" "httpx>=0.27,<1" "langgraph>=1,<2" "prometheus-client>=0.20,<1" "boto3>=1.35,<2"
+"$VENV_PYTHON" -m pip install -q "fastapi>=0.115,<1" "uvicorn>=0.30,<1" "httpx>=0.27,<1" "langgraph>=1,<2" "prometheus-client>=0.20,<1" "PyJWT[crypto]>=2.9,<3" "boto3>=1.35,<2"
 mkdir -p "$RUN_DIR"
 export SALES_SERVICE_URL="http://127.0.0.1:8101"
 export MARKETING_SERVICE_URL="http://127.0.0.1:8102"
