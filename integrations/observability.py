@@ -4,7 +4,9 @@ Only route templates, methods, status classes and durations are recorded.
 No prompts, record IDs, API keys, actor headers or model outputs are logged.
 """
 import time
-from fastapi import Response
+import os
+import secrets
+from fastapi import Response, Header, HTTPException
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 HTTP_REQUESTS = Counter(
@@ -35,5 +37,13 @@ def instrument(app):
                 HTTP_DURATION.labels(request.method, template).observe(time.perf_counter()-started)
 
     @app.get("/internal/metrics", include_in_schema=False)
-    def metrics():
+    def metrics(x_metrics_key: str | None = Header(default=None)):
+        # Scrape locally with a dedicated key outside POC; never use the gateway key.
+        stage = os.getenv("LSK_STAGE", "poc").lower()
+        if stage in ("pilot", "production"):
+            expected = os.getenv("METRICS_API_KEY", "")
+            if not expected:
+                raise HTTPException(status_code=503, detail="Metrics access not configured")
+            if not x_metrics_key or not secrets.compare_digest(expected, x_metrics_key):
+                raise HTTPException(status_code=401, detail="Metrics credentials required")
         return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
