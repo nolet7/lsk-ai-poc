@@ -1,5 +1,5 @@
 import unittest
-from scripts.evaluate_asr import grade_case
+from scripts.evaluate_lsk import grade_case
 
 class EvaluationTests(unittest.TestCase):
     def test_passes_verified_evidence(self):

@@ -36,17 +36,17 @@ for domain in sales marketing finance; do
 done
 # Never copy the developer's Git credentials, AWS CLI files, local .env, databases or generated data.
 sudo rsync -a --exclude=.git --exclude=.env --exclude=.env.business \
-  --exclude=config.env --exclude=.run-asr --exclude=.venv-asr \
+  --exclude=config.env --exclude=.run-lsk --exclude=.venv-lsk \
   --exclude='*.sqlite3' --exclude=__pycache__ \
   --exclude=data/chroma_db --exclude=data/outputs \
   "$ROOT/" /opt/lsk-ai-poc/
 sudo chown -R root:root /opt/lsk-ai-poc
 sudo install -o root -g root -m 0600 "$ROOT/.env.business" /etc/lsk-ai/common.env
 sudo install -o root -g root -m 0600 "$ROOT/integrations/release-stage.env" /etc/lsk-ai/stage.env
-if [[ ! -x /opt/lsk-ai-poc/.venv-asr/bin/python ]]; then
-  sudo python3 -m venv /opt/lsk-ai-poc/.venv-asr
+if [[ ! -x /opt/lsk-ai-poc/.venv-lsk/bin/python ]]; then
+  sudo python3 -m venv /opt/lsk-ai-poc/.venv-lsk
 fi
-sudo /opt/lsk-ai-poc/.venv-asr/bin/python -m pip install \
+sudo /opt/lsk-ai-poc/.venv-lsk/bin/python -m pip install \
   "fastapi>=0.115,<1" "uvicorn>=0.30,<1" "httpx>=0.27,<1" \
   "langgraph>=1,<2" "boto3>=1.35,<2" "prometheus-client>=0.20,<1" \
   "PyJWT[crypto]>=2.9,<3"
