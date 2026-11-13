@@ -10,6 +10,7 @@ on:
       - 'tests/test_bedrock_ai.py'
       - 'tests/test_asr_agent.py'
       - 'tests/test_release_guard.py'
+      - 'tests/test_operational_contract.py'
       - 'compose.business.yml'
       - '.github/workflows/business-integration.yml'
   pull_request:
@@ -37,4 +38,5 @@ jobs:
           python -m unittest discover -s tests -p test_bedrock_ai.py -v
           python -m unittest discover -s tests -p test_asr_agent.py -v
           python -m unittest discover -s tests -p test_release_guard.py -v
+          python -m unittest discover -s tests -p test_operational_contract.py -v
       - run: python -m compileall -q integrations
