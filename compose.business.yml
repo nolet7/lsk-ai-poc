@@ -14,6 +14,9 @@ services:
       FINANCE_SERVICE_URL: http://finance:8000
       AWS_REGION: ${AWS_REGION:-us-east-1}
       BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-}
+      OIDC_JWKS_URL: ${OIDC_JWKS_URL:-}
       LSK_STAGE: production
       LSK_ENABLE_DEMO_WRITES: ${LSK_ENABLE_DEMO_WRITES:-false}
     depends_on: [sales, marketing, finance]
@@ -22,6 +25,8 @@ services:
     ports: ["127.0.0.1:8101:8000"]
     environment:
       APP_DOMAIN: sales
+      LSK_STAGE: production
+      LSK_ENABLE_DEMO_WRITES: ${LSK_ENABLE_DEMO_WRITES:-false}
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
     volumes: [sales_data:/srv/data]
   marketing:
@@ -29,6 +34,8 @@ services:
     ports: ["127.0.0.1:8102:8000"]
     environment:
       APP_DOMAIN: marketing
+      LSK_STAGE: production
+      LSK_ENABLE_DEMO_WRITES: ${LSK_ENABLE_DEMO_WRITES:-false}
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
     volumes: [marketing_data:/srv/data]
   finance:
@@ -36,6 +43,8 @@ services:
     ports: ["127.0.0.1:8103:8000"]
     environment:
       APP_DOMAIN: finance
+      LSK_STAGE: production
+      LSK_ENABLE_DEMO_WRITES: ${LSK_ENABLE_DEMO_WRITES:-false}
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
     volumes: [finance_data:/srv/data]
 volumes:
