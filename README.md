@@ -2,7 +2,7 @@
 
 > **AI maturity (POC):** The original LangGraph report pipeline is deterministic and does not call a generative model. Business service insights optionally use OpenAI-compatible LLM APIs when configured; the gateway now also exposes a read-only, explicitly model-backed AWS Bedrock endpoint at `POST /v1/ai/analyze`. See [AI model setup and limitations](docs/AI_MODEL_INTEGRATION.md). The new `POST /v1/agent/run` endpoint adds bounded model-directed tool use through LangGraph and Bedrock, with opt-in pending proposals only. It is still a simulation; model access/permissions have not been verified in AWS.
 
-# Production AI Platform — Fully Commented Code
+# LSK Enterprise AI Enablement — ASR Commercial POC
 
 ## Integrated business applications (Sales · Marketing · Finance)
 
@@ -14,7 +14,7 @@ Three standalone [GitHub applications](docs/INTEGRATION.md) now connect through 
 | Marketing Intelligence | [lsk-marketing](https://github.com/nolet7/lsk-marketing) | http://localhost:8102/portal |
 | Finance Invoice Review | [lsk-finance](https://github.com/nolet7/lsk-finance) | http://localhost:8103/portal |
 
-From this repository root, run `bash scripts/clone_business_apps.sh`, copy `.env.business.example` to `.env.business`, set separate strong demo keys, and run `docker compose --env-file .env.business -f compose.business.yml up --build`. Visit http://localhost:8090 for the hub.
+For **AWS EC2 without Docker Desktop**, use [ASR commercial agent deployment guide](docs/ASR_COMMERCIAL_AI.md) and the [EC2 infrastructure scripts](infrastructure/README.md). For optional containerized development, run `bash scripts/clone_business_apps.sh`, copy `.env.business.example` to `.env.business`, set separate strong demo keys, and run `docker compose --env-file .env.business -f compose.business.yml up --build`. Visit http://localhost:8090 for the hub.
 
 See [integration architecture and API contract](docs/INTEGRATION.md) and [async agent tool adapters](docs/AGENT_CONNECTORS.md).
 
@@ -23,9 +23,9 @@ See [integration architecture and API contract](docs/INTEGRATION.md) and [async 
 ---
 
 
-## Purpose
+## Purpose (legacy deterministic report demo)
 
-This project demonstrates a multi-agent enterprise AI workflow built with
+This legacy portion demonstrates a deterministic multi-step enterprise reporting workflow built with
 LangGraph and MCP-style tools. It turns a user question into an approved,
 saved business report.
 
