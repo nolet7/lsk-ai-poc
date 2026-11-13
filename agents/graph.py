@@ -56,6 +56,9 @@ class PlatformState(TypedDict):
     # Approval decision used for graph routing.
     approved: bool
 
+    # Prevent unbounded report revisions.
+    review_attempts: int
+
 
 def review_router(state: PlatformState) -> str:
     """Route the report according to the review decision."""
@@ -65,6 +68,8 @@ def review_router(state: PlatformState) -> str:
         return "save_report"
 
     # Send a rejected report back to the Writer Agent.
+    if state.get("review_attempts", 0) >= 3:
+        return "stop"
     return "writer"
 
 
@@ -101,6 +106,7 @@ def build_platform_graph():
 
             # Rejected reports return to the writer.
             "writer": "writer",
+            "stop": END,
         },
     )
 
@@ -145,6 +151,7 @@ def run_platform(question: str) -> PlatformState:
 
         # Reports start unapproved.
         "approved": False,
+        "review_attempts": 0,
     }
 
     # Execute the graph and return the completed workflow state.
