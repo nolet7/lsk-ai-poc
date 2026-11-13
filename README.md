@@ -14,7 +14,7 @@ Three standalone [GitHub applications](docs/INTEGRATION.md) now connect through 
 | Marketing Intelligence | [lsk-marketing](https://github.com/nolet7/lsk-marketing) | http://localhost:8102/portal |
 | Finance Invoice Review | [lsk-finance](https://github.com/nolet7/lsk-finance) | http://localhost:8103/portal |
 
-For **AWS EC2 without Docker Desktop**, use [ASR commercial agent deployment guide](docs/ASR_COMMERCIAL_AI.md) and the [EC2 infrastructure scripts](infrastructure/README.md). For optional containerized development, run `bash scripts/clone_business_apps.sh`, copy `.env.business.example` to `.env.business`, set separate strong demo keys, and run `docker compose --env-file .env.business -f compose.business.yml up --build`. Visit http://localhost:8090 for the hub.
+For **AWS EC2 or Git Bash without Docker Desktop**, use [ASR commercial agent deployment guide](docs/ASR_COMMERCIAL_AI.md) and the [EC2 infrastructure scripts](infrastructure/README.md). To start all services: `bash scripts/clone_business_apps.sh`, configure `.env.business`, then run `bash scripts/start_asr_services.sh` (Bedrock requires `BEDROCK_MODEL_ID` and AWS model permissions). For optional containerized development, run `bash scripts/clone_business_apps.sh`, copy `.env.business.example` to `.env.business`, set separate strong demo keys, and run `docker compose --env-file .env.business -f compose.business.yml up --build`. Visit http://localhost:8090 for the hub.
 
 See [integration architecture and API contract](docs/INTEGRATION.md) and [async agent tool adapters](docs/AGENT_CONNECTORS.md).
 
