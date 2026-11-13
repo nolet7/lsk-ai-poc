@@ -36,6 +36,7 @@ class Tests(unittest.TestCase):
         with patch.dict(os.environ,{"BEDROCK_MODEL_ID":"test"}):
             result=asyncio.run(run_commercial_agent("Review the account","employee",no_call,converse=converse))
         self.assertFalse(result["proposal_creation_enabled"])
+        self.assertEqual(result["finish_reason"],"no_verified_evidence")
 
     def test_requires_model(self):
         async def no_call(*args): return {}
