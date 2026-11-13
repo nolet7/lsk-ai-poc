@@ -8,7 +8,8 @@ import secrets
 from urllib.parse import quote
 import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
+from pathlib import Path
 from pydantic import BaseModel, Field
 
 DOMAINS = {
@@ -214,3 +215,8 @@ async def readiness(actor: str = Depends(identity)):
     return {"status":"ready","services":services,
             "bedrock_model_configured":True,
             "note":"Configuration/readiness only; live model access not verified"}
+
+@app.get("/agent", include_in_schema=False)
+async def agent_portal():
+    """Static read-only demo UI, served only over the protected/local network."""
+    return FileResponse(Path(__file__).with_name("agent_portal.html"))
