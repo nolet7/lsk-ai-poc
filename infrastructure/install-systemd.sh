@@ -15,6 +15,7 @@ set -a
 source "$ROOT/.env.business"
 set +a
 [[ -n "${DEMO_API_KEY:-}" && -n "${GATEWAY_API_KEY:-}" ]] || { echo "Missing API keys" >&2; exit 1; }
+[[ "$DEMO_API_KEY" != replace-* && "$GATEWAY_API_KEY" != replace-* ]] || { echo "Replace example credentials before installation" >&2; exit 1; }
 if [[ "$LSK_STAGE" != poc ]]; then
   for field in BEDROCK_MODEL_ID OIDC_ISSUER OIDC_AUDIENCE OIDC_JWKS_URL METRICS_API_KEY; do
     [[ -n "${!field:-}" ]] || { echo "Missing required staged setting: $field" >&2; exit 1; }
