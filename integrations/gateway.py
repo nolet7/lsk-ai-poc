@@ -127,3 +127,24 @@ a{color:#1764a5}article{background:white;border-radius:10px;padding:20px;margin:
 <article><h2>Marketing Intelligence</h2><a href="http://localhost:8102/portal">Open Marketing Portal</a></article>
 <article><h2>Finance Exception Review</h2><a href="http://localhost:8103/portal">Open Finance Portal</a></article>
 <p>Developer API: <a href="/docs">Gateway Swagger docs</a>. Synthetic demo only, not enterprise SSO.</p></body></html>"""
+
+# Real model-backed, read-only AI analysis; never applies proposals.
+from integrations.bedrock_ai import analyze_with_bedrock, ModelUnavailable
+
+class AIAnalyzeRequest(BaseModel):
+    domain: str
+    record_id: str = Field(min_length=1, max_length=100)
+    question: str = Field(min_length=3, max_length=2000)
+
+@app.post("/v1/ai/analyze")
+async def ai_analyze(payload: AIAnalyzeRequest, actor: str = Depends(identity)):
+    service_url(payload.domain)  # enforce the fixed domain allow-list
+    from urllib.parse import quote as urlquote
+    evidence = await forward(payload.domain,
+                             "/v1/records/" + urlquote(payload.record_id, safe="") + "/insight",
+                             actor)
+    try:
+        return await analyze_with_bedrock(payload.domain, payload.record_id, payload.question, evidence)
+    except (ModelUnavailable, ValueError) as exc:
+        raise HTTPException(status_code=503 if isinstance(exc, ModelUnavailable) else 422,
+                            detail=str(exc)) from exc
