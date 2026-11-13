@@ -26,3 +26,8 @@ data/outputs/*
 # Local checkouts and integration secrets
 external/
 .env.business
+
+# Native Python ASR commercial demo
+.venv-asr/
+.run-asr/
+infrastructure/config.env
