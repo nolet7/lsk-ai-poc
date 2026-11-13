@@ -11,6 +11,7 @@ import os
 from typing import Any, Awaitable, Callable, TypedDict
 
 from langgraph.graph import StateGraph, END
+from integrations.observability import MODEL_CALLS
 
 ALLOWED_DOMAINS = ("sales", "marketing", "finance")
 MAX_TOOL_ROUNDS = 3
@@ -87,14 +88,17 @@ async def run_commercial_agent(
                 response = await asyncio.to_thread(_client_converse, state["messages"], tools, SYSTEM_PROMPT, model_id)
             else:
                 response = await converse(state["messages"], tools, SYSTEM_PROMPT, model_id)
+            MODEL_CALLS.labels("success").inc()
             message = response["output"]["message"]
             blocks = message["content"]
             if not isinstance(blocks,list) or not blocks:
                 raise ValueError("empty model content")
             return {"messages": state["messages"] + [message]}
         except (AgentError, ValueError, KeyError, TypeError) as exc:
+            MODEL_CALLS.labels("error").inc()
             raise AgentError("Bedrock response invalid or model configuration unavailable") from exc
         except Exception as exc:
+            MODEL_CALLS.labels("error").inc()
             raise AgentError("Bedrock invocation failed; check model access, IAM, region and quotas") from exc
 
     def route(state: WorkflowState) -> str:
