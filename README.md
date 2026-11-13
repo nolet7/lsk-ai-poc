@@ -1,4 +1,6 @@
-> **AI maturity (POC):** The original LangGraph report pipeline is deterministic and does not call a generative model. Business service insights optionally use OpenAI-compatible LLM APIs when configured; the gateway now also exposes a read-only, explicitly model-backed AWS Bedrock endpoint at `POST /v1/ai/analyze`. See [AI model setup and limitations](docs/AI_MODEL_INTEGRATION.md). Neither path is an autonomous production agent, and model access/permissions have not been verified in AWS.
+> **ASR Group commercial-operations scenario:** This independently developed portfolio simulation is not sponsored, operated, or endorsed by ASR Group and uses exclusively fictional records. The use cases cover B2B sales, retail marketing, customer accounts, and invoice review—not plant maintenance. See [ASR solution](docs/ASR_COMMERCIAL_AI.md).
+
+> **AI maturity (POC):** The original LangGraph report pipeline is deterministic and does not call a generative model. Business service insights optionally use OpenAI-compatible LLM APIs when configured; the gateway now also exposes a read-only, explicitly model-backed AWS Bedrock endpoint at `POST /v1/ai/analyze`. See [AI model setup and limitations](docs/AI_MODEL_INTEGRATION.md). The new `POST /v1/agent/run` endpoint adds bounded model-directed tool use through LangGraph and Bedrock, with opt-in pending proposals only. It is still a simulation; model access/permissions have not been verified in AWS.
 
 # Production AI Platform — Fully Commented Code
 
