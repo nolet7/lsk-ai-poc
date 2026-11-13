@@ -22,6 +22,8 @@ python -m unittest discover -s tests -v
 
 On PowerShell, set `$env:SALES_DEMO_API_KEY="..."` instead of `export`. Never commit a token.
 
+Open [http://127.0.0.1:8010/portal](http://127.0.0.1:8010/portal) for the employee-facing browser demo. Enter your local demo API key and use separate requester and reviewer actors. See [FDE_DELIVERY.md](FDE_DELIVERY.md) for discovery and measurable pilot acceptance criteria.
+
 ## End-to-end exercise
 
 ```bash
