@@ -7,7 +7,7 @@ import os
 import secrets
 from urllib.parse import quote
 import httpx
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from pathlib import Path
 from pydantic import BaseModel, Field
@@ -19,10 +19,23 @@ DOMAINS = {
 }
 app = FastAPI(title="LSK Enterprise AI Enablement Gateway", version="1.0.0")
 from integrations.observability import instrument
+from integrations.security import stage, Principal, verify_oidc_token, ensure_domain
 instrument(app)
 
-def identity(x_api_key: str | None = Header(default=None),
-             x_actor: str | None = Header(default=None)):
+async def identity(
+    request: Request,
+    x_api_key: str | None = Header(default=None),
+    x_actor: str | None = Header(default=None),
+    authorization: str | None = Header(default=None),
+) -> str:
+    """POC demo identity or independently verified JWT for pilot/production."""
+    if stage() in ("pilot", "production"):
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Verified bearer token required")
+        import asyncio
+        principal = await asyncio.to_thread(verify_oidc_token, authorization[7:])
+        request.state.principal = principal
+        return principal.subject
     key = os.getenv("GATEWAY_API_KEY")
     if not key:
         raise HTTPException(status_code=503, detail="GATEWAY_API_KEY not configured")
@@ -30,7 +43,11 @@ def identity(x_api_key: str | None = Header(default=None),
         raise HTTPException(status_code=401, detail="Invalid gateway key")
     if not x_actor or not x_actor.strip() or len(x_actor) > 80:
         raise HTTPException(status_code=400, detail="X-Actor required")
+    request.state.principal = x_actor.strip()
     return x_actor.strip()
+
+def enforce_domain(request: Request, domain: str) -> None:
+    ensure_domain(getattr(request.state, "principal", ""), domain)
 
 def service_url(domain: str) -> str:
     if domain not in DOMAINS:
@@ -78,38 +95,44 @@ async def health():
     return {"status": "ok", "services": list(DOMAINS)}
 
 @app.get("/v1/apps")
-async def apps(actor: str = Depends(identity)):
+async def apps(request: Request, actor: str = Depends(identity)):
     """Discover services concurrently; individual failures are reported, not hidden."""
+    eligible = [d for d in DOMAINS if not isinstance(getattr(request.state, "principal", ""), Principal) or d in request.state.principal.domains]
     results = await asyncio.gather(
-        *(forward(domain, "/v1/capabilities", actor) for domain in DOMAINS),
+        *(forward(domain, "/v1/capabilities", actor) for domain in eligible),
         return_exceptions=True,
     )
     response = {}
-    for domain, result in zip(DOMAINS, results):
+    for domain, result in zip(eligible, results):
         response[domain] = {"status": "unavailable"} if isinstance(result, Exception) else {"status": "available", "capabilities": result}
     return response
 
 @app.get("/v1/apps/{domain}/records")
-async def records(domain: str, actor: str = Depends(identity)):
+async def records(domain: str, request: Request, actor: str = Depends(identity)):
+    enforce_domain(request, domain)
     return await forward(domain, "/v1/records", actor)
 
 @app.get("/v1/apps/{domain}/records/{record_id}/insight")
-async def insight(domain: str, record_id: str, actor: str = Depends(identity)):
+async def insight(domain: str, record_id: str, request: Request, actor: str = Depends(identity)):
+    enforce_domain(request, domain)
     return await forward(domain, "/v1/records/" + quote(record_id, safe="") + "/insight", actor)
 
 @app.get("/v1/apps/{domain}/proposals")
-async def proposals(domain: str, actor: str = Depends(identity)):
+async def proposals(domain: str, request: Request, actor: str = Depends(identity)):
+    enforce_domain(request, domain)
     return await forward(domain, "/v1/proposals", actor)
 
 @app.post("/v1/apps/{domain}/proposals", status_code=201)
-async def propose(domain: str, payload: Proposal, actor: str = Depends(identity)):
+async def propose(domain: str, payload: Proposal, request: Request, actor: str = Depends(identity)):
+    enforce_domain(request, domain)
     require_demo_mutation_permission()
     return await forward(domain, "/v1/proposals", actor, "POST", payload.model_dump())
 
 @app.post("/v1/apps/{domain}/proposals/{proposal_id}/decision")
 async def decide(domain: str, proposal_id: str, payload: Decision,
                  x_role: str | None = Header(default=None),
-                 actor: str = Depends(identity)):
+                 request: Request, actor: str = Depends(identity)):
+    enforce_domain(request, domain)
     if x_role != "reviewer":
         raise HTTPException(status_code=403, detail="Reviewer role required (demo only)")
     require_demo_mutation_permission()
@@ -117,7 +140,8 @@ async def decide(domain: str, proposal_id: str, payload: Decision,
                          "POST", payload.model_dump(), reviewer=True)
 
 @app.get("/v1/apps/{domain}/audit")
-async def audit(domain: str, x_role: str | None = Header(default=None), actor: str = Depends(identity)):
+async def audit(domain: str, request: Request, x_role: str | None = Header(default=None), actor: str = Depends(identity)):
+    enforce_domain(request, domain)
     if x_role != "reviewer":
         raise HTTPException(status_code=403, detail="Reviewer role required (demo only)")
     require_demo_mutation_permission()
@@ -143,7 +167,8 @@ class AIAnalyzeRequest(BaseModel):
     question: str = Field(min_length=3, max_length=2000)
 
 @app.post("/v1/ai/analyze")
-async def ai_analyze(payload: AIAnalyzeRequest, actor: str = Depends(identity)):
+async def ai_analyze(payload: AIAnalyzeRequest, request: Request, actor: str = Depends(identity)):
+    enforce_domain(request, payload.domain)
     service_url(payload.domain)  # enforce the fixed domain allow-list
     from urllib.parse import quote as urlquote
     evidence = await forward(payload.domain,
@@ -164,10 +189,11 @@ class CommercialAgentRequest(BaseModel):
     allow_proposals: bool = False
 
 @app.post("/v1/agent/run")
-async def commercial_agent(body: CommercialAgentRequest, actor: str = Depends(identity)):
+async def commercial_agent(body: CommercialAgentRequest, request: Request, actor: str = Depends(identity)):
     if body.allow_proposals:
         require_demo_mutation_permission()
     async def business_tool(domain, path, who, method="GET", payload=None):
+        enforce_domain(request, domain)
         return await forward(domain, path, who, method=method, payload=payload)
     try:
         return await run_commercial_agent(
@@ -192,18 +218,19 @@ def require_demo_mutation_permission() -> None:
         )
 
 @app.get("/ready")
-async def readiness(actor: str = Depends(identity)):
+async def readiness(request: Request, actor: str = Depends(identity)):
     """Authenticated, non-invasive readiness check (NOT a live Bedrock call).
 
     Checks synthetic business contract endpoints and whether a model ID is
     configured. This does not validate IAM authorization or model invocation.
     """
+    eligible = [d for d in DOMAINS if not isinstance(getattr(request.state, "principal", ""), Principal) or d in request.state.principal.domains]
     checks = await asyncio.gather(
-        *(forward(d, "/v1/capabilities", actor) for d in DOMAINS),
+        *(forward(d, "/v1/capabilities", actor) for d in eligible),
         return_exceptions=True,
     )
     services = {d: ("unavailable" if isinstance(r, Exception) else "reachable")
-                for d, r in zip(DOMAINS, checks)}
+                for d, r in zip(eligible, checks)}
     configured = bool(os.getenv("BEDROCK_MODEL_ID", "").strip())
     ready = all(v == "reachable" for v in services.values()) and configured
     if not ready:
