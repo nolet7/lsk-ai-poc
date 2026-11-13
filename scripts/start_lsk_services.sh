@@ -4,8 +4,8 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${ENV_FILE:-$ROOT/.env.business}"
-VENV="${ASR_VENV:-$ROOT/.venv-asr}"
-RUN_DIR="$ROOT/.run-asr"
+VENV="${LSK_VENV:-$ROOT/.venv-lsk}"
+RUN_DIR="$ROOT/.run-lsk"
 
 [[ -f "$ENV_FILE" ]] || { echo "Missing .env.business. Copy .env.business.example, fill in both keys, then rerun." >&2; exit 1; }
 # shellcheck disable=SC1090
@@ -59,4 +59,4 @@ start gateway "$ROOT" 8090 gateway
 echo "Check: curl http://127.0.0.1:8090/health"
 echo "Logs: $RUN_DIR/*.log"
 echo "Model mode: BEDROCK_MODEL_ID=${BEDROCK_MODEL_ID:+configured}; without it /v1/agent/run responds 503."
-echo "To stop: bash scripts/stop_asr_services.sh"
+echo "To stop: bash scripts/stop_lsk_services.sh"

@@ -1,6 +1,6 @@
-# POC technical acceptance — ASR commercial AI
+# POC technical acceptance — LSK commercial AI
 
-**Independent synthetic portfolio simulation.** Do not use real ASR Group records.
+**Independent synthetic portfolio simulation.** Do not use real LSK records.
 
 ## Automated local checks
 ```bash
@@ -8,7 +8,7 @@ git switch poc
 git pull --ff-only origin poc
 bash scripts/clone_business_apps.sh
 bash scripts/verify_business_versions.sh
-python -m unittest discover -s tests -p test_asr_agent.py -v
+python -m unittest discover -s tests -p test_lsk_agent.py -v
 python -m unittest discover -s tests -p test_release_guard.py -v
 python -m unittest discover -s tests -p test_operational_contract.py -v
 ```
