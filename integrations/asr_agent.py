@@ -88,11 +88,11 @@ async def run_commercial_agent(
                 response = await asyncio.to_thread(_client_converse, state["messages"], tools, SYSTEM_PROMPT, model_id)
             else:
                 response = await converse(state["messages"], tools, SYSTEM_PROMPT, model_id)
-            MODEL_CALLS.labels("success").inc()
             message = response["output"]["message"]
             blocks = message["content"]
             if not isinstance(blocks,list) or not blocks:
                 raise ValueError("empty model content")
+            MODEL_CALLS.labels("success").inc()
             return {"messages": state["messages"] + [message]}
         except (AgentError, ValueError, KeyError, TypeError) as exc:
             MODEL_CALLS.labels("error").inc()
@@ -135,9 +135,10 @@ async def run_commercial_agent(
                     if name == "get_insight":
                         data = await forward(domain, f"/v1/records/{record_id}/insight", actor)
                     elif name == "propose_change" and allow_proposals:
-                        if not any(t.get("status")=="success" and t.get("tool") in ("list_records","get_insight")
+                        if not any(t.get("status")=="success" and t.get("tool")=="get_insight"
+                                   and t.get("domain")==domain and t.get("record_id")==record_id
                                    for t in trace):
-                            raise ValueError("Proposal requires prior verified read-only evidence")
+                            raise ValueError("Proposal requires prior verified insight for this same record")
                         proposal_text, reason = args.get("text"), args.get("reason")
                         if not isinstance(proposal_text,str) or not 3 <= len(proposal_text) <= 1000:
                             raise ValueError("Invalid proposal text")
