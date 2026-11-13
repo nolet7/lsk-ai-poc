@@ -45,7 +45,8 @@ class OperationsTests(unittest.TestCase):
         self.assertIn("allow_proposals:false", response.text)
 
     def test_pilot_metrics_require_dedicated_key(self):
-        with patch.dict(os.environ, {"LSK_STAGE":"pilot","METRICS_API_KEY":"metrics-secret"}, clear=True):
+        with patch.dict(os.environ, {"LSK_STAGE":"pilot","METRICS_API_KEY":"metrics-secret"}, clear=True), \
+             patch("integrations.observability.stage",return_value="pilot"):
             denied=self.client.get("/internal/metrics")
             allowed=self.client.get("/internal/metrics",headers={"X-Metrics-Key":"metrics-secret"})
         self.assertEqual(denied.status_code,401)
