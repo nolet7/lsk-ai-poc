@@ -17,6 +17,8 @@ DOMAINS = {
     "finance": os.getenv("FINANCE_SERVICE_URL", "http://localhost:8103").rstrip("/"),
 }
 app = FastAPI(title="LSK Enterprise AI Enablement Gateway", version="1.0.0")
+from integrations.observability import instrument
+instrument(app)
 
 def identity(x_api_key: str | None = Header(default=None),
              x_actor: str | None = Header(default=None)):
