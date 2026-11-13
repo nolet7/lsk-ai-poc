@@ -6,6 +6,13 @@ from integrations.gateway import app
 
 class GatewayAIContractTests(unittest.TestCase):
     def setUp(self):
+        # Test POC API contracts independently of the checkout's immutable stage.
+        self._stage = patch("integrations.gateway.stage", return_value="poc")
+        self._metricstage = patch("integrations.observability.stage", return_value="poc")
+        self._stage.start()
+        self._metricstage.start()
+        self.addCleanup(self._stage.stop)
+        self.addCleanup(self._metricstage.stop)
         self.client = TestClient(app)
         self.headers = {"X-API-Key":"gateway-test", "X-Actor":"analyst"}
         self.payload = {"domain":"finance", "record_id":"inv1", "question":"Explain the exception"}
