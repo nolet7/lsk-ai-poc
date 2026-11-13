@@ -61,3 +61,25 @@ class Tests(unittest.TestCase):
         self.assertEqual(calls,[])
         self.assertEqual(result["tool_trace"][0]["status"],"error")
         self.assertFalse(result["proposal_creation_enabled"])
+
+    def test_model_cannot_propose_for_unread_record(self):
+        calls=[]
+        async def forward(domain,path,actor,method="GET",payload=None):
+            calls.append((domain,path,method))
+            return {"summary":"Synthetic record","signals":{"matched":False}}
+        async def dialogue(messages,tools,system,model):
+            if len(messages)==1:
+                return {"output":{"message":{"role":"assistant","content":[{"toolUse":{
+                    "toolUseId":"read-1","name":"get_insight",
+                    "input":{"domain":"finance","record_id":"inv-1001"}}}]}}}
+            if len(messages)==3:
+                return {"output":{"message":{"role":"assistant","content":[{"toolUse":{
+                    "toolUseId":"write-1","name":"propose_change",
+                    "input":{"domain":"finance","record_id":"inv-1002",
+                             "text":"Change note","reason":"Synthetic test"}}}]}}}
+            return {"output":{"message":{"role":"assistant","content":[{"text":"No change proposed for inv-1002."}]}}}
+        with patch.dict(os.environ,{"BEDROCK_MODEL_ID":"test-model"}):
+            result=asyncio.run(run_commercial_agent("Review invoices safely","employee",forward,
+                                                     allow_proposals=True,converse=dialogue))
+        self.assertFalse(any(method=="POST" for _,_,method in calls))
+        self.assertEqual([t["status"] for t in result["tool_trace"]],["success","error"])
