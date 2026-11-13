@@ -25,6 +25,9 @@ services:
     ports: ["127.0.0.1:8101:8000"]
     environment:
       APP_DOMAIN: sales
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-}
+      OIDC_JWKS_URL: ${OIDC_JWKS_URL:-}
       LSK_STAGE: production
       LSK_ENABLE_DEMO_WRITES: ${LSK_ENABLE_DEMO_WRITES:-false}
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
@@ -34,6 +37,9 @@ services:
     ports: ["127.0.0.1:8102:8000"]
     environment:
       APP_DOMAIN: marketing
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-}
+      OIDC_JWKS_URL: ${OIDC_JWKS_URL:-}
       LSK_STAGE: production
       LSK_ENABLE_DEMO_WRITES: ${LSK_ENABLE_DEMO_WRITES:-false}
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
@@ -43,6 +49,9 @@ services:
     ports: ["127.0.0.1:8103:8000"]
     environment:
       APP_DOMAIN: finance
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-}
+      OIDC_JWKS_URL: ${OIDC_JWKS_URL:-}
       LSK_STAGE: production
       LSK_ENABLE_DEMO_WRITES: ${LSK_ENABLE_DEMO_WRITES:-false}
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
