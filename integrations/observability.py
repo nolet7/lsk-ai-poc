@@ -19,6 +19,11 @@ HTTP_DURATION = Histogram(
 MODEL_CALLS = Counter(
     "lsk_bedrock_calls_total", "Bedrock calls by result", ["result"]
 )
+MODEL_TOKENS = Counter(
+    "lsk_bedrock_tokens_total",
+    "Bedrock tokens reported in actual provider responses",
+    ["direction"],
+)
 
 def instrument(app):
     @app.middleware("http")
