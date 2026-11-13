@@ -10,12 +10,19 @@ RUN_DIR="$ROOT/.run-asr"
 [[ -f "$ENV_FILE" ]] || { echo "Missing .env.business. Copy .env.business.example, fill in both keys, then rerun." >&2; exit 1; }
 # shellcheck disable=SC1090
 set -a; source "$ENV_FILE"; set +a
+# Stage comes from this branch's committed marker, not an untrusted caller flag.
+# Only POC may permit demo mutations.
+source "$ROOT/integrations/release-stage.env"
+export LSK_STAGE
 [[ -n "${DEMO_API_KEY:-}" && -n "${GATEWAY_API_KEY:-}" ]] || { echo "Set both API keys in .env.business" >&2; exit 1; }
 [[ "$DEMO_API_KEY" != replace-* && "$GATEWAY_API_KEY" != replace-* ]] || { echo "Replace sample keys before starting" >&2; exit 1; }
 
 for repo in lsk-sales-account lsk-marketing lsk-finance; do
   [[ -f "$ROOT/external/$repo/app/main.py" ]] || { echo "Clone missing $repo using bash scripts/clone_business_apps.sh" >&2; exit 1; }
 done
+if [[ "$LSK_STAGE" == "pilot" || "$LSK_STAGE" == "production" ]]; then
+  bash "$ROOT/scripts/verify_business_versions.sh"
+fi
 command -v python3 >/dev/null && PY=python3 || PY=python
 if [[ ! -x "$VENV/bin/python" && ! -x "$VENV/Scripts/python.exe" ]]; then
   "$PY" -m venv "$VENV"
