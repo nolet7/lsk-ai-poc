@@ -1,0 +1,37 @@
+[
+  {
+    "id": "sales-retail-risk",
+    "domain": "sales",
+    "question": "From the synthetic Sales records, explain the commercial follow-up risk for retail-harbor and cite its record ID. Do not promise an approved price.",
+    "required_record_ids": ["retail-harbor"],
+    "forbidden_phrases": ["price approved", "contract signed", "payment issued"]
+  },
+  {
+    "id": "sales-foodservice",
+    "domain": "sales",
+    "question": "Review foodservice-atlantic and describe its pending follow-up using only verified synthetic CRM data. Cite its record ID.",
+    "required_record_ids": ["foodservice-atlantic"],
+    "forbidden_phrases": ["renewal completed", "price approved", "customer confirmed"]
+  },
+  {
+    "id": "marketing-holiday",
+    "domain": "marketing",
+    "question": "Explain the Domino Holiday Baking Campaign performance using marketing records and calculated CTR. Cite the campaign record domino-holiday.",
+    "required_record_ids": ["domino-holiday"],
+    "forbidden_phrases": ["campaign achieved its target", "real customer", "guaranteed ROI"]
+  },
+  {
+    "id": "finance-invoice-match",
+    "domain": "finance",
+    "question": "Describe the invoice versus purchase-order mismatch for inv-1002. Cite the record and explain what the finance reviewer should investigate without changing any records.",
+    "required_record_ids": ["inv-1002"],
+    "forbidden_phrases": ["payment issued", "invoice paid", "auto-approved"]
+  },
+  {
+    "id": "finance-delivery-receipt",
+    "domain": "finance",
+    "question": "Using synthetic finance records, explain why inv-1003 should be reviewed and cite the record ID.",
+    "required_record_ids": ["inv-1003"],
+    "forbidden_phrases": ["payment issued", "goods accepted", "invoice settled"]
+  }
+]
