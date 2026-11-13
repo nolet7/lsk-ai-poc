@@ -1,0 +1,101 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Private-by-SG Ubuntu EC2 host for synthetic LSK commercial AI services
+Parameters:
+  Stage:
+    Type: String
+    AllowedValues: [poc, pilot, production]
+    Default: poc
+  UbuntuAmiId:
+    Type: AWS::EC2::Image::Id
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+  SecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Existing SG allowing SSH only from approved IP
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+  InstanceType:
+    Type: String
+    Default: t3.medium
+    AllowedValues: [t3.medium, t3.large, t3a.medium, t3a.large]
+  RootVolumeGiB:
+    Type: Number
+    Default: 20
+    MinValue: 20
+    MaxValue: 100
+  BedrockResourceArns:
+    Type: CommaDelimitedList
+    Description: Approved model and inference-profile ARNs, including required underlying foundation-model ARNs
+Resources:
+  BedrockExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'lsk-${Stage}-bedrock-ec2-${AWS::Region}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ec2.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeApprovedBedrockModelsOnly
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: InvokeApprovedInference
+                Effect: Allow
+                Action: [bedrock:InvokeModel]
+                Resource: !Ref BedrockResourceArns
+  BedrockExecutionProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref BedrockExecutionRole]
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref UbuntuAmiId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref BedrockExecutionProfile
+      KeyName: !Ref KeyName
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds: [!Ref SecurityGroupId]
+      Monitoring: true
+      CreditSpecification: {CPUCredits: standard}
+      MetadataOptions:
+        HttpEndpoint: enabled
+        HttpTokens: required
+        HttpPutResponseHopLimit: 1
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !Ref RootVolumeGiB
+            VolumeType: gp3
+            Encrypted: true
+            DeleteOnTermination: true
+      Tags:
+        - {Key: Name, Value: !Sub 'lsk-ai-${Stage}'}
+        - {Key: Environment, Value: !Ref Stage}
+        - {Key: DataClassification, Value: synthetic-only}
+  CpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained high EC2 CPU. SNS alert actions require configuration.
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      Dimensions:
+        - {Name: InstanceId, Value: !Ref Instance}
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 80
+      EvaluationPeriods: 3
+      Period: 300
+      Statistic: Average
+      TreatMissingData: missing
+Outputs:
+  InstanceId:
+    Value: !Ref Instance
+  PublicIp:
+    Value: !GetAtt Instance.PublicIp
+  ProfileName:
+    Value: !Ref BedrockExecutionProfile
+  Note:
+    Value: SSH-only ingress. Configure systemd, role validation and TLS access prior to use.
