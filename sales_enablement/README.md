@@ -2,6 +2,10 @@
 
 A runnable **synthetic-data** internal Sales workflow. It is not a Reddit product, is not connected to Salesforce, and is not production hardened. The original report-demo modules remain unchanged.
 
+## Async I/O design
+
+The employee API endpoints are `async def`. LLM inference uses `httpx.AsyncClient` so the server can serve other requests while waiting on the remote model. Blocking SQLite operations are deliberately isolated through `asyncio.to_thread`, retaining transaction handling in `store.py`. The local MCP account-brief tool also awaits inference. This is async I/O, **not** an async database driver or an agent job queue. For enterprise scale, migrate to an async database connection pool and durable background worker.
+
 ## What works
 
 - Seeded SQLite CRM with three fictional accounts, account list and grounded account briefs.
