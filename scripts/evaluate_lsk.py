@@ -15,7 +15,7 @@ import urllib.request
 from datetime import datetime, timezone
 
 ROOT=Path(__file__).resolve().parents[1]
-CASES=ROOT/"evaluation"/"fixtures"/"asr_golden.json"
+CASES=ROOT/"evaluation"/"fixtures"/"lsk_golden.json"
 RESULTS=ROOT/"evaluation"/"results"
 
 def grade_case(case, response, elapsed):
@@ -70,7 +70,7 @@ def run():
         print(case["id"], "PASS" if result["passed"] else "FAIL")
     RESULTS.mkdir(parents=True,exist_ok=True)
     now=datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    output=RESULTS/("asr_eval_"+now+".json")
+    output=RESULTS/("lsk_eval_"+now+".json")
     report={"timestamp":now,"total":len(results),"passed":sum(x["passed"] for x in results),
             "results":results,
             "scope":"Synthetic fixture-based model evaluations; no business adoption or production certification"}

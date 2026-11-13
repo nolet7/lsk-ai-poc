@@ -1,6 +1,6 @@
 # Pilot validation — commercial AI assistant
 
-**Not a live pilot approval.** Synthetic ASR-inspired accounts and campaign records only. Verified SSO and per-record access are blockers.
+**Not a live pilot approval.** Synthetic LSK-branded accounts and campaign records only. Verified SSO and per-record access are blockers.
 
 ## Representative scripted tasks
 1. **Sales:** explain account `retail-harbor` negotiation risk using only synthetic CRM facts; no invented pricing/lead-time promises.

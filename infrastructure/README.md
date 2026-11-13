@@ -1,8 +1,8 @@
-# EC2 deployment — LSK ASR-inspired commercial AI (no Docker)
+# EC2 deployment — LSK LSK-branded commercial AI (no Docker)
 
 This repository contains **reproducible infrastructure and service deployment artifacts**.
 The system remains a synthetic-data portfolio demonstration. Real customer data,
-real ASR Group systems, and any claim of ASR endorsement are out of scope.
+real LSK systems, and any claim of LSK endorsement are out of scope.
 
 ## Deployment prerequisites
 
@@ -127,7 +127,7 @@ demo headers never count as signed identity.
 ```bash
 python -m unittest discover -s tests -p test_oidc_crypto.py -v
 python -m unittest discover -s tests -p test_oidc_stage.py -v
-python -m unittest discover -s tests -p test_asr_agent.py -v
+python -m unittest discover -s tests -p test_lsk_agent.py -v
 python scripts/smoke_integration.py
 ```
 
@@ -139,12 +139,12 @@ databases and **does not call Bedrock**. The live-model acceptance procedure:
 export LSK_ENABLE_DEMO_WRITES=false
 export GATEWAY_API_KEY='POC_GATEWAY_KEY'    # POC only
 # For pilot/production use: export OIDC_ACCESS_TOKEN='REAL_SIGNED_USER_ACCESS_TOKEN'
-python scripts/evaluate_asr.py
+python scripts/evaluate_lsk.py
 ```
 
 The evaluator uses synthetic examples and saves evidence under
 `evaluation/results/`. It does not automatically certify model quality,
-release readiness or actual ASR Group outcomes. Use the stage's acceptance
+release readiness or actual LSK outcomes. Use the stage's acceptance
 document and `docs/RELEASE_AUDIT.md`.
 
 ## Cleanup and rollback

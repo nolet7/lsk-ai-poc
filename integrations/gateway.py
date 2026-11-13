@@ -190,9 +190,9 @@ async def ai_analyze(payload: AIAnalyzeRequest, request: Request, actor: str = D
         raise HTTPException(status_code=503 if isinstance(exc, ModelUnavailable) else 422,
                             detail=str(exc)) from exc
 
-# Bounded, model-directed LangGraph workflow for ASR-themed commercial use cases.
+# Bounded, model-directed LangGraph workflow for LSK-themed commercial use cases.
 # Distinct from the legacy deterministic report graph.
-from integrations.asr_agent import run_commercial_agent, AgentError
+from integrations.lsk_agent import run_commercial_agent, AgentError
 
 class CommercialAgentRequest(BaseModel):
     question: str = Field(min_length=3, max_length=2000)
