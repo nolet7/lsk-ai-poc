@@ -1,23 +1,23 @@
 # CTO Mandate — Enterprise AI Enablement Platform
 
-**Document classification:** Portfolio simulation. This is a fictional executive mandate created to demonstrate senior Forward Deployed Engineering practices. It is not a statement from Reddit or an actual employer.
+**Document classification:** Independent ASR Group commercial operations portfolio simulation. This is a fictional executive mandate created to demonstrate senior Forward Deployed Engineering. It is not an ASR Group directive, endorsement, partnership, implementation or employment claim. All demo data is invented.
 
 **Executive sponsor:** Chief Technology Officer (fictional)  
 **Accountable delivery lead:** Senior Forward Deployed Engineer  
-**Business partners:** Sales Operations, Marketing Operations, Business Development, Finance, AI Platform Hub  
-**Initial business process:** Sales account preparation and CRM note approval
+**Business partners:** B2B Foodservice and Retail Sales, Brand Marketing, Customer Accounts, Commercial Finance, AI Platform Hub  
+**Initial business process:** Commercial account preparation and approval-gated account notes (no manufacturing/maintenance workflows)
 
 ## Why this project is needed
 
 Revenue and operations teams frequently move between CRM records, campaign reports, spreadsheets, email threads and policy documents to prepare account briefs or resolve routine exceptions. Manual consolidation is time-consuming and inconsistent. Unsanctioned AI experimentation can also create incorrect recommendations, expose restricted customer data or produce unreviewed changes to systems of record.
 
-The organization needs a **repeatable, governed method** to assess business workflows, select appropriate AI or deterministic automation, integrate approved systems, and move useful workflows from prototypes to trusted production services. The success criteria are reductions in time and rework without unacceptable quality, security, or cost tradeoffs.
+In this hypothetical ASR-themed commercial setting, the organization needs a **repeatable, governed method** to assess business workflows, select appropriate AI or deterministic automation, integrate approved systems, and move useful workflows from prototypes to trusted production services. The success criteria are reductions in time and rework without unacceptable quality, security, or cost tradeoffs.
 
 This is a **problem hypothesis** to be validated in discovery, not evidence of an actual measured business problem.
 
 ## CTO mandate
 
-> Design, develop, and operationalize an internal AI enablement capability that shortens repetitive employee workflows in Sales, Marketing, Business Development, and Finance. Deliver functioning, secure, human-governed applications rather than chatbot demonstrations. Begin with Sales Account Intelligence, prove quality and operational value using synthetic data, pilot with representative users after identity and security controls are in place, and promote only verified workflows into production. Build shared skills, connectors, evaluation gates and playbooks so business teams can take ownership without perpetual dependence on the FDE team.
+> Design, develop, and operationalize an internal AI enablement capability that shortens repetitive employee workflows in Sales, Marketing, Business Development, and Finance. Deliver functioning, secure, human-governed applications rather than chatbot demonstrations. Begin with fictional distributor/retail Sales Account Intelligence, prove quality and operational value using synthetic data, pilot with representative users after identity and security controls are in place, and promote only verified workflows into production. Build shared skills, connectors, evaluation gates and playbooks so business teams can take ownership without perpetual dependence on the FDE team.
 
 ## Non-negotiable engineering decisions
 
@@ -44,7 +44,7 @@ Initial *targets*, subject to stakeholder validation: 50% reduction in median ac
 | `production` | Managed infrastructure, hardened services, audited integrations, operational SLOs, on-call and rollback | Security approval, passing CI/evals, reliability exercises, explicit release sign-off |
 | `main` | Preserved existing primary branch; changes flow through reviewed PRs | Repository owners determine merge policy |
 
-**Important:** A branch name describes intended maturity; it does not prove the implementation has passed the release gate. The current Sales implementation is a portfolio POC; it must not be presented as a production or real customer integration.
+**Important:** A branch name describes intended maturity; it does not prove the implementation has passed the release gate. The current project is an independent ASR-themed commercial portfolio POC; it must not be presented as a real ASR Group initiative, production deployment or customer integration.
 
 ## CTO acceptance review
 
