@@ -7,6 +7,12 @@ from integrations.gateway import app
 
 class DemoReleaseGuardTests(unittest.TestCase):
     def setUp(self):
+        self._stage=patch("integrations.gateway.stage",return_value="poc")
+        self._metricstage=patch("integrations.observability.stage",return_value="poc")
+        self._stage.start()
+        self._metricstage.start()
+        self.addCleanup(self._stage.stop)
+        self.addCleanup(self._metricstage.stop)
         self.client=TestClient(app)
         self.headers={"X-API-Key":"test-gateway", "X-Actor":"test.employee"}
         self.payload={"record_id":"inv-1002","text":"Review invoice","reason":"Finance exception"}
