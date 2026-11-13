@@ -1,6 +1,6 @@
 # LSK Commercial AI Enablement — FDE POC
 
-**Independent portfolio simulation only. Not affiliated with, approved by, or deployed for LSK.**
+**Independent fictional LSK commercial-operations portfolio simulation; not an actual enterprise deployment.**
 **All sample customer records, invoices, amounts, campaigns, outcomes and business hypotheses are fictional.**
 
 ## LSK commercial business context
