@@ -1,5 +1,24 @@
 # Production AI Platform: Proof of Concept
 
+## Integrated business applications (Sales · Marketing · Finance)
+
+Three standalone [GitHub applications](docs/INTEGRATION.md) now connect through a common asynchronous enterprise gateway:
+
+| Application | Repository | Employee portal |
+|---|---|---|
+| Sales Account Intelligence | [lsk-sales-account](https://github.com/nolet7/lsk-sales-account) | http://localhost:8101/portal |
+| Marketing Intelligence | [lsk-marketing](https://github.com/nolet7/lsk-marketing) | http://localhost:8102/portal |
+| Finance Invoice Review | [lsk-finance](https://github.com/nolet7/lsk-finance) | http://localhost:8103/portal |
+
+From this repository root, run `bash scripts/clone_business_apps.sh`, copy `.env.business.example` to `.env.business`, set separate strong demo keys, and run `docker compose --env-file .env.business -f compose.business.yml up --build`. Visit http://localhost:8090 for the hub.
+
+See [integration architecture and API contract](docs/INTEGRATION.md) and [async agent tool adapters](docs/AGENT_CONNECTORS.md).
+
+**Portfolio POC only:** Synthetic records, demo shared API keys, spoofable reviewer-role headers and local storage. These integrations have not completed production security, identity, deployment, or business-adoption gates.
+
+---
+
+
 A multi-agent retrieval-augmented (RAG) workflow that turns a question into an
 approved, saved business report. It is packaged as a FastAPI service with
 health and readiness probes, API-key authentication, Prometheus metrics,
