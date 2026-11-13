@@ -14,6 +14,7 @@ on:
       - 'tests/test_oidc_stage.py'
       - 'tests/test_oidc_crypto.py'
       - 'tests/test_branch_stage.py'
+      - 'tests/test_lsk_branding.py'
       - 'tests/test_lsk_evaluation.py'
       - 'scripts/smoke_integration.py'
       - 'evaluation/fixtures/lsk_golden.json'
@@ -50,6 +51,7 @@ jobs:
           python -m unittest discover -s tests -p test_oidc_stage.py -v
           python -m unittest discover -s tests -p test_oidc_crypto.py -v
           python -m unittest discover -s tests -p test_branch_stage.py -v
+          python -m unittest discover -s tests -p test_lsk_branding.py -v
           python -m unittest discover -s tests -p test_lsk_evaluation.py -v
       - name: Shell script syntax
         run: |
