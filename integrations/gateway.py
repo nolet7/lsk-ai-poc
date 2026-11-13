@@ -130,8 +130,8 @@ async def propose(domain: str, payload: Proposal, request: Request, actor: str =
 
 @app.post("/v1/apps/{domain}/proposals/{proposal_id}/decision")
 async def decide(domain: str, proposal_id: str, payload: Decision,
-                 x_role: str | None = Header(default=None),
-                 request: Request, actor: str = Depends(identity)):
+                 request: Request, x_role: str | None = Header(default=None),
+                 actor: str = Depends(identity)):
     enforce_domain(request, domain)
     if x_role != "reviewer":
         raise HTTPException(status_code=403, detail="Reviewer role required (demo only)")
