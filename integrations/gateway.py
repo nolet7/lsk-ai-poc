@@ -189,3 +189,28 @@ def require_demo_mutation_permission() -> None:
             status_code=403,
             detail="Demo mutations disabled; available only in isolated POC with explicit opt-in",
         )
+
+@app.get("/ready")
+async def readiness(actor: str = Depends(identity)):
+    """Authenticated, non-invasive readiness check (NOT a live Bedrock call).
+
+    Checks synthetic business contract endpoints and whether a model ID is
+    configured. This does not validate IAM authorization or model invocation.
+    """
+    checks = await asyncio.gather(
+        *(forward(d, "/v1/capabilities", actor) for d in DOMAINS),
+        return_exceptions=True,
+    )
+    services = {d: ("unavailable" if isinstance(r, Exception) else "reachable")
+                for d, r in zip(DOMAINS, checks)}
+    configured = bool(os.getenv("BEDROCK_MODEL_ID", "").strip())
+    ready = all(v == "reachable" for v in services.values()) and configured
+    if not ready:
+        raise HTTPException(status_code=503, detail={
+            "status":"not_ready","services":services,
+            "bedrock_model_configured":configured,
+            "note":"No Bedrock IAM or inference check performed",
+        })
+    return {"status":"ready","services":services,
+            "bedrock_model_configured":True,
+            "note":"Configuration/readiness only; live model access not verified"}
