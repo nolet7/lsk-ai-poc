@@ -1,5 +1,6 @@
 """Regression tests requiring only the Python standard library for core logic."""
 import os
+import asyncio
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -21,7 +22,7 @@ class SalesWorkflowTests(unittest.TestCase):
         account=store.get_account("acme")
         self.assertEqual(account["name"],"Acme Analytics")
         with patch.dict(os.environ,{"OPENAI_API_KEY":""}):
-            brief=intelligence.account_brief(account)
+            brief=asyncio.run(intelligence.account_brief(account))
         self.assertEqual(brief["mode"],"deterministic")
         self.assertTrue(brief["evidence"])
         self.assertEqual(brief["account_id"],"acme")
@@ -44,6 +45,23 @@ class SalesWorkflowTests(unittest.TestCase):
         proposed=store.request_change("northstar","Send revised campaign scope","Requested by buyer","sales.user")
         store.decide(proposed["id"],"marketing.reviewer",False)
         self.assertEqual(store.get_account("northstar")["notes"],before)
+
+    def test_async_model_inference_with_mock_transport(self):
+        import json
+        import httpx
+        account=store.get_account("acme")
+        async def handler(request):
+            self.assertIn("Bearer",request.headers["Authorization"])
+            body=json.loads(request.content)
+            self.assertEqual(body["model"],"test-model")
+            return httpx.Response(200,json={"choices":[{"message":{"content":json.dumps({"summary":"Acme renewal","risks":["Close date"],"recommended_actions":["Follow up"]})}}]})
+        async def run():
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+                return await intelligence.account_brief(account,client=client)
+        with patch.dict(os.environ,{"OPENAI_API_KEY":"test-only","SALES_LLM_MODEL":"test-model"}):
+            brief=asyncio.run(run())
+        self.assertEqual(brief["mode"],"llm")
+        self.assertEqual(brief["summary"],"Acme renewal")
 
     def test_unknown_account_rejected(self):
         with self.assertRaises(KeyError):
