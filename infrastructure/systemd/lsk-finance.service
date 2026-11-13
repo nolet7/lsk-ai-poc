@@ -1,0 +1,35 @@
+[Unit]
+Description=LSK finance service (production, synthetic data)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lskai
+Group=lskai
+WorkingDirectory=/opt/lsk-ai-poc/external/lsk-finance
+EnvironmentFile=/etc/lsk-ai/common.env
+EnvironmentFile=/etc/lsk-ai/stage.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=APP_DOMAIN=finance
+Environment=APP_DB_PATH=/var/lib/lsk-ai/finance/app.sqlite3
+ExecStart=/opt/lsk-ai-poc/.venv-asr/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8103
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+LimitNOFILE=4096
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/var/lib/lsk-ai/finance
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
