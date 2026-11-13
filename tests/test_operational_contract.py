@@ -31,6 +31,12 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual(forward.await_count,3)
         self.assertIn("not verified",response.json()["note"])
 
+    def test_agent_portal_is_static_and_read_only(self):
+        response=self.client.get("/agent")
+        self.assertEqual(response.status_code,200)
+        self.assertIn("Commercial AI Assistant", response.text)
+        self.assertIn("allow_proposals:false", response.text)
+
     def test_metrics_do_not_require_customer_credentials(self):
         response=self.client.get("/internal/metrics")
         self.assertEqual(response.status_code,200)
