@@ -9,3 +9,7 @@ data/outputs/
 data/*.sqlite3
 .pytest_cache/
 .coverage
+
+# Local checkouts and integration secrets
+external/
+.env.business
