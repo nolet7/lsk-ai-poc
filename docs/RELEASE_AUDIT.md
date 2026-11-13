@@ -1,70 +1,94 @@
-# ASR-themed Commercial AI Platform — Release Audit & Gates
+# Three-stage release engineering audit — ASR-inspired commercial AI
 
-**Status: Code improvements committed; no live AWS Bedrock inference, independent security review, business-user pilot or production release has been demonstrated.**
+**Classification:** Independent fictional enterprise portfolio project. Not sponsored,
+endorsed or deployed by ASR Group. All customer, marketing and finance records
+are synthetic. No manufacturing equipment or plant maintenance workflows.
 
-**Scope:** Independent fictional ASR Group-inspired commercial workflows (B2B distributor sales, brand marketing and commercial finance). Not a real ASR Group project and not plant/manufacturing automation.
+## Shared implemented foundation
+- Real AWS Bedrock Converse integration (only when model/IAM access is configured)
+  with a bounded LangGraph agent and selected read-only business tools.
+- Separate Sales, Marketing and Finance APIs; deterministic calculations and
+  approval-pending proposal workflow only for an explicitly opted-in isolated POC.
+- AI cannot approve a proposal, alter a financial ledger or execute payment.
+  Proposals require a verified prior read of the *same record*.
+- Gateway and business services independently check signed OIDC bearer JWT
+  issuer, audience, expiry, RS256 signature and domain claims for pilot/production.
+  Demo API keys alone cannot authenticate a user in these stages.
+- Pin SHA revisions of each standalone business repository; scripts synchronize
+  only clean checkouts with explicit confirmation.
+- Four-service no-Docker launcher, SSH-only EC2/systemd deployment files,
+  CloudFormation EC2 instance profile with scoped Bedrock invocation resource ARNs.
+- Request count/status/latency and Bedrock model result Prometheus metrics;
+  staging metrics require dedicated scrape secret.
+- Negative security tests, signed-token crypto tests, mocked agent tests,
+  deterministic evaluation tests and a four-process HTTP smoke suite.
+- A live-model read-only evaluation harness producing JSON evidence per task.
 
-## Shared architecture
-- Gateway with fixed Sales/Marketing/Finance service allow-list; async HTTPX and timeout
-- LangGraph agent invokes Bedrock Converse; bounded model-directed tool rounds
-- Verified synthetic business facts must appear in the tool trace before a response is presented as grounded analysis
-- Read-only tools are always available to a configured model; proposal creation is deliberately gated
-- All approval/reviewer endpoints are **untrusted demonstration controls**. Never connect real records or permit general network access.
+## POC — feature complete for synthetic lab execution, live acceptance pending
+**Implemented:** synthetic workflows, opt-in model, LangGraph tool use, gateway,
+isolated demo approvals, CI unit/smoke checks, local and EC2 launch procedures.
+**Access:** POC gateway uses a demo key. Backend write operations require BOTH
+`LSK_STAGE=poc` and `LSK_ENABLE_DEMO_WRITES=true`; disabled by default.
+**Unverified:** actual AWS Bedrock invocation, model choice/usage charges,
+live latency, real FDE task score, AWS VM provisioned and running.
+**Promotion requires:** clean CI, successful live Bedrock scenario, grounded
+record citations, negative prompt-injection tests, budget and performance report.
 
-## POC — functionality and repeatability
-Implemented:
-- Bedrock and LangGraph code, mocked tool and model tests; fail-closed if model config absent
-- Synthetic commercial records, deterministic metrics and human-review simulation
-- No-Docker Python launcher, EC2 launch helper, locally scoped ports
-- Requests must explicitly opt in to demo proposal creation AND `LSK_STAGE=poc`, `LSK_ENABLE_DEMO_WRITES=true`
+## Pilot — code-ready for synthetic evaluation, organizational onboarding pending
+**Implemented:** shared real-model agent, signed OIDC identity at gateway and
+backends, per-domain claim enforcement, demo writes/approvals disabled,
+private loopback interfaces, pinned app revisions, synthetic golden cases and
+runbooks.
+**Unverified:** actual IdP provisioned and connected, real signed-token
+end-to-end handshake, evaluation sample scores, domain owner acceptance,
+data processing/security approval and operational on-call.
+**Promotion requires:** validated user roles and scoped records, stakeholder
+evaluation, authorized IdP and TLS ingress, reviewed privacy policy and
+measured cost/quality/latency. Synthetic-only testing until approved.
 
-Exit gate (NOT YET PASSED):
-- Functional test run on a clean local or EC2 instance with valid Bedrock model
-- Documented model version, supported tool use, permissions, latency, costs and error behavior
-- An adversarial suite including prompt injection, tool misuse and record grounding
-- No unintended writes and independently verified service responses
+## Production — hardened code baseline, NOT released for real business traffic
+**Implemented:** the same signed OIDC read-only gateway/backend path,
+fail-closed demo mutations, service sandboxing, secrets separation, EC2 instance
+profile template, monitoring and release regression gates.
+**Unverified and/or not implemented:** user-specific record-level entitlements,
+token-bound service-to-service identity beyond shared backend secret, managed
+HA database, tamper-evident audit, multi-node scaling, secure real-data
+connectors, disaster recovery tests, penetration/security reviews, active
+CloudWatch alert notifications, SLO dashboard/alert ownership and change
+approval. The sample EC2 single-host design is **NOT** high availability.
+**Release gate:** do not use real customer information, expose a public API or
+call this production-operational until all missing controls and signoffs are
+implemented, tested and approved.
 
-## Pilot — restricted evaluation, not production
-Implemented at code level:
-- Shared Bedrock/LangGraph code and contract regression tests
-- `LSK_STAGE=pilot` and fail-closed demo write/reviewer gate
-- Localhost-binding in Compose to avoid exposing demo endpoints to a public network
-
-Required before a real pilot (NOT IMPLEMENTED):
-- OIDC/JWT validation with bound user identity and per-record authorization
-- User-specific tool permissions, consent and data classification; encrypted managed secrets
-- Representative stakeholders, quantitative baseline, evaluation fixtures and manual quality review
-- Invocation traces/usage/cost and incident response; rollback and signoff
-- Staging deployment in a separate AWS account/environment, isolation and approved egress
-
-## Production — protected baseline only
-Implemented at code level:
-- Agent code, runtime dependencies, tests, locality on Compose
-- `LSK_STAGE=production` blocks the demo's change/review surfaces
-- No AWS credentials stored in source
-
-**Release blocker:** This branch is *not deployable as a genuine production business system* without real auth, audited write authorization, secure network ingress, SLOs, operational persistence and approvals. Treat current code as a **release candidate scaffold** for a private synthetic-data demo only.
-
-Required:
-1. Verified OIDC + claims authorization propagated to each backend (no X-Actor/X-Role trust)
-2. Backend defenses preventing direct calls that bypass the gateway
-3. Real business API integration with data-owner approval, idempotency and scoped service identities
-4. IaC with private subnets, TLS ingress, managed secrets, VPC endpoints/egress restriction and encrypted durable storage
-5. SLI/SLO dashboards (requests, p95, availability, model latency, tool failure, tokens/cost, security events)
-6. CI with pinned provenance, SAST/dependency scanning, negative auth tests, model evaluations and signed release promotion
-7. Disaster recovery, budget alarms, load testing, rollback drills and operational handover
-8. Written security, data governance and business release approval
-
-## Source of truth and promotion
-Promote by reviewed change/PR. **Branch names are not deployment environments.** Do not merge POC access controls into a real pilot/production unchanged. Never claim AI is running unless `mode` indicates model execution and Bedrock was invoked successfully.
-
-## How to test current safeguards
+## Verification commands (using a virtual environment with test dependencies)
 ```bash
-python -m unittest discover -s tests -p test_gateway_contract.py -v
+git fetch origin
+git switch poc  # or pilot / production
+git pull --ff-only origin $(git branch --show-current)
+bash scripts/clone_business_apps.sh
+bash scripts/sync_business_versions.sh  # explicit confirmation, clean checkouts only
+bash scripts/verify_business_versions.sh
 python -m unittest discover -s tests -p test_asr_agent.py -v
-python -m unittest discover -s tests -p test_bedrock_ai.py -v
+python -m unittest discover -s tests -p test_oidc_crypto.py -v
+python -m unittest discover -s tests -p test_oidc_stage.py -v
 python -m unittest discover -s tests -p test_release_guard.py -v
+python -m unittest discover -s tests -p test_asr_evaluation.py -v
+python scripts/smoke_integration.py
 ```
-The unit tests use mocks; actual AWS Bedrock inference and real application integration remain separate gated acceptance tests.
+CI will also test an isolated four-service smoke stack. Without a recorded
+successful CI run and live Bedrock evidence, these are **implemented checks**,
+not observed passing results.
 
-References: https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use-client-side.html and https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html
+## AWS operator steps
+Review `infrastructure/README.md`, the CloudFormation costs and permissions,
+configure `.env.business`, then use `infrastructure/install-systemd.sh` on
+an authorized Ubuntu EC2 machine. Verify root-controlled secrets and SSH
+localhost tunnels. No new AWS resources have been provisioned by this code
+review. Do not run a second EC2 launch if one already exists.
+
+## Release governance
+Use reviewed changes and pinned artifacts for promotion. The branch names
+reflect intended maturity and differ in their enforced stage markers. A merge
+is not equivalent to a pilot/production signoff. Keep source data synthetic
+until legal, security, privacy and business operators formally authorize
+a real environment.
