@@ -131,6 +131,9 @@ async def run_commercial_agent(
                     if name == "get_insight":
                         data = await forward(domain, f"/v1/records/{record_id}/insight", actor)
                     elif name == "propose_change" and allow_proposals:
+                        if not any(t.get("status")=="success" and t.get("tool") in ("list_records","get_insight")
+                                   for t in trace):
+                            raise ValueError("Proposal requires prior verified read-only evidence")
                         proposal_text, reason = args.get("text"), args.get("reason")
                         if not isinstance(proposal_text,str) or not 3 <= len(proposal_text) <= 1000:
                             raise ValueError("Invalid proposal text")
