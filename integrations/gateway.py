@@ -5,6 +5,7 @@ POC only: shared API key and X-Actor headers are NOT production identity.
 import asyncio
 import os
 import secrets
+from contextvars import ContextVar
 from urllib.parse import quote
 import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
@@ -21,6 +22,8 @@ app = FastAPI(title="LSK Enterprise AI Enablement Gateway", version="1.0.0")
 from integrations.observability import instrument
 from integrations.security import stage, Principal, verify_oidc_token, ensure_domain
 instrument(app)
+# Context-local, request-scoped credential; never log or expose this value.
+_access_token: ContextVar[str | None] = ContextVar("lsk_authorized_bearer", default=None)
 
 async def identity(
     request: Request,
@@ -35,6 +38,7 @@ async def identity(
         import asyncio
         principal = await asyncio.to_thread(verify_oidc_token, authorization[7:])
         request.state.principal = principal
+        _access_token.set(authorization[7:])
         return principal.subject
     key = os.getenv("GATEWAY_API_KEY")
     if not key:
@@ -44,6 +48,7 @@ async def identity(
     if not x_actor or not x_actor.strip() or len(x_actor) > 80:
         raise HTTPException(status_code=400, detail="X-Actor required")
     request.state.principal = x_actor.strip()
+    _access_token.set(None)
     return x_actor.strip()
 
 def enforce_domain(request: Request, domain: str) -> None:
@@ -62,6 +67,11 @@ async def forward(domain: str, path: str, actor: str, method: str = "GET",
     if not key:
         raise HTTPException(status_code=503, detail="DEMO_API_KEY not configured")
     headers = {"X-API-Key": key, "X-Actor": actor}
+    if stage() in ("pilot", "production"):
+        token = _access_token.get()
+        if not token:
+            raise HTTPException(status_code=401, detail="Missing verified service caller")
+        headers["Authorization"] = "Bearer " + token
     if reviewer:
         # Demo only: true reviewer identity must be verified through OIDC before production.
         headers["X-Role"] = "reviewer"
