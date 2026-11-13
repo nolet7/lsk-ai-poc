@@ -14,6 +14,9 @@ Writer -> Reviewer -> Save Report when approved
 def reviewer_agent(state: dict) -> dict:
     """Review the draft report and record an approval decision."""
 
+    # Increment before routing so rejected reports cannot loop forever.
+    state["review_attempts"] = state.get("review_attempts", 0) + 1
+
     # Read the draft produced by the Writer Agent.
     report = state["draft_report"]
 
@@ -55,6 +58,9 @@ def reviewer_agent(state: dict) -> dict:
 
         # Promote the approved draft to final report content.
         state["final_report"] = report
+
+    if not approved and state["review_attempts"] >= 3:
+        notes.append("Maximum review attempts reached; no report was published.")
 
     # Store all review notes as one newline-separated string.
     state["review_notes"] = "\n".join(notes)
