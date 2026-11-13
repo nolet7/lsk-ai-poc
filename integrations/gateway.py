@@ -100,6 +100,7 @@ async def proposals(domain: str, actor: str = Depends(identity)):
 
 @app.post("/v1/apps/{domain}/proposals", status_code=201)
 async def propose(domain: str, payload: Proposal, actor: str = Depends(identity)):
+    require_demo_mutation_permission()
     return await forward(domain, "/v1/proposals", actor, "POST", payload.model_dump())
 
 @app.post("/v1/apps/{domain}/proposals/{proposal_id}/decision")
@@ -108,6 +109,7 @@ async def decide(domain: str, proposal_id: str, payload: Decision,
                  actor: str = Depends(identity)):
     if x_role != "reviewer":
         raise HTTPException(status_code=403, detail="Reviewer role required (demo only)")
+    require_demo_mutation_permission()
     return await forward(domain, "/v1/proposals/" + quote(proposal_id, safe="") + "/decision", actor,
                          "POST", payload.model_dump(), reviewer=True)
 
@@ -115,6 +117,7 @@ async def decide(domain: str, proposal_id: str, payload: Decision,
 async def audit(domain: str, x_role: str | None = Header(default=None), actor: str = Depends(identity)):
     if x_role != "reviewer":
         raise HTTPException(status_code=403, detail="Reviewer role required (demo only)")
+    require_demo_mutation_permission()
     return await forward(domain, "/v1/audit", actor, reviewer=True)
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -159,6 +162,8 @@ class CommercialAgentRequest(BaseModel):
 
 @app.post("/v1/agent/run")
 async def commercial_agent(body: CommercialAgentRequest, actor: str = Depends(identity)):
+    if body.allow_proposals:
+        require_demo_mutation_permission()
     async def business_tool(domain, path, who, method="GET", payload=None):
         return await forward(domain, path, who, method=method, payload=payload)
     try:
@@ -169,3 +174,16 @@ async def commercial_agent(body: CommercialAgentRequest, actor: str = Depends(id
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+def require_demo_mutation_permission() -> None:
+    """No demo write/reviewer endpoint may operate on pilot/production.
+
+    POC users must explicitly enable the unsafe simulation locally.
+    Verified identity must replace these headers before any real-world writes.
+    """
+    if not (os.getenv("LSK_STAGE", "").lower() == "poc" and
+            os.getenv("LSK_ENABLE_DEMO_WRITES", "").lower() == "true"):
+        raise HTTPException(
+            status_code=403,
+            detail="Demo mutations disabled; available only in isolated POC with explicit opt-in",
+        )
