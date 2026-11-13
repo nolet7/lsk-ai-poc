@@ -94,10 +94,15 @@ def run():
             for d in apps:
                 back="http://127.0.0.1:"+str(ports[d])
                 status,records=http(back+"/v1/records",backend_headers)
-                assert status==200 and records, (d,status)
+                if stage == "poc":
+                    assert status==200 and records, (d,status)
+                    record_id=records[0]["id"]
+                else:
+                    assert status==401, (d,status)
+                    record_id="inv-1002" if d=="finance" else "synthetic-demo"
                 status,_=http(back+"/v1/proposals",backend_headers,
-                              {"record_id":records[0]["id"],"text":"Smoke proposal","reason":"No write allowed"})
-                assert status==403, (d,status)
+                              {"record_id":record_id,"text":"Smoke proposal","reason":"No write allowed"})
+                assert status==(403 if stage=="poc" else 401), (d,status)
             if stage=="poc":
                 status,discovery=http(base+"/v1/apps",headers)
                 assert status==200 and set(discovery)==set(apps)
