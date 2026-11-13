@@ -1,7 +1,7 @@
-# Three-stage release engineering audit — ASR-inspired commercial AI
+# Three-stage release engineering audit — LSK-branded commercial AI
 
 **Classification:** Independent fictional enterprise portfolio project. Not sponsored,
-endorsed or deployed by ASR Group. All customer, marketing and finance records
+endorsed or deployed by LSK. All customer, marketing and finance records
 are synthetic. No manufacturing equipment or plant maintenance workflows.
 
 ## Shared implemented foundation
@@ -68,11 +68,11 @@ git pull --ff-only origin $(git branch --show-current)
 bash scripts/clone_business_apps.sh
 bash scripts/sync_business_versions.sh  # explicit confirmation, clean checkouts only
 bash scripts/verify_business_versions.sh
-python -m unittest discover -s tests -p test_asr_agent.py -v
+python -m unittest discover -s tests -p test_lsk_agent.py -v
 python -m unittest discover -s tests -p test_oidc_crypto.py -v
 python -m unittest discover -s tests -p test_oidc_stage.py -v
 python -m unittest discover -s tests -p test_release_guard.py -v
-python -m unittest discover -s tests -p test_asr_evaluation.py -v
+python -m unittest discover -s tests -p test_lsk_evaluation.py -v
 python scripts/smoke_integration.py
 ```
 CI will also test an isolated four-service smoke stack. Without a recorded

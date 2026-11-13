@@ -1,16 +1,11 @@
-# ASR Group Commercial AI Enablement — FDE POC
+# LSK Commercial AI Enablement — FDE POC
 
-**Independent portfolio simulation only. Not affiliated with, approved by, or deployed for ASR Group.**
+**Independent portfolio simulation only. Not affiliated with, approved by, or deployed for LSK.**
 **All sample customer records, invoices, amounts, campaigns, outcomes and business hypotheses are fictional.**
 
-## Actual business context
+## LSK commercial business context
 
-ASR Group markets cane-sugar and specialty sweetener products for grocery, foodservice and industrial customers. Its public brand portfolio includes Domino, C&H, Florida Crystals, Redpath and Tate & Lyle. This POC is about **commercial workflows**: customer account teams, distributor/foodservice relationships, consumer brand marketing and commercial finance—NOT manufacturing equipment or factory reliability.
-
-Sources:
-- https://www.asr-group.com/about-us
-- https://www.asr-group.com/our-brands
-- https://www.asrgroup-professional.com/about-us
+LSK is a **fictional enterprise food and ingredients distributor** used solely for this portfolio project. It serves grocery, foodservice, bakery, wholesale, and specialty ingredients customers. All product brands, customer records, campaign numbers, and financial transactions in this demonstration are fictional. No real company's trademarks or business records are required.
 
 ## Fictional CTO directive
 
@@ -63,7 +58,7 @@ The old `POST /run` report graph is retained as a separate legacy deterministic 
 
 Requirements: AWS EC2 instance and secured SSH tunnel, Python 3.12, outbound HTTPS, permission to invoke an available model through Bedrock (prefer an **EC2 instance profile** with least-privilege Bedrock permissions; never copy CLI keys to the server). Select an available, supported Bedrock Claude model or inference profile ID in the intended region. Model IDs, region availability and billing vary; no hardcoded assumption about access.
 
-Clone `lsk-ai-poc` on its `poc` branch then run `bash scripts/clone_business_apps.sh`. **Recommended:** copy `.env.business.example` to `.env.business`, set distinct random gateway and business API keys, set `BEDROCK_MODEL_ID` in your shell, then run `bash scripts/start_asr_services.sh` from the central project root. That script creates a separate Python environment and starts all four services on localhost without Docker. Check `.run-asr/*.log`, and stop using `bash scripts/stop_asr_services.sh`. If you already have SQLite files from previous test runs, updating seed JSON does not overwrite those existing records. For manual setup, use a virtual environment:
+Clone `lsk-ai-poc` on its `poc` branch then run `bash scripts/clone_business_apps.sh`. **Recommended:** copy `.env.business.example` to `.env.business`, set distinct random gateway and business API keys, set `BEDROCK_MODEL_ID` in your shell, then run `bash scripts/start_lsk_services.sh` from the central project root. That script creates a separate Python environment and starts all four services on localhost without Docker. Check `.run-lsk/*.log`, and stop using `bash scripts/stop_lsk_services.sh`. If you already have SQLite files from previous test runs, updating seed JSON does not overwrite those existing records. For manual setup, use a virtual environment:
 
 ```bash
 python3 -m venv ~/lsk-venv
@@ -109,8 +104,8 @@ curl -X POST http://127.0.0.1:8090/v1/agent/run \
 ## Tests and limitations
 
 ```bash
-python -m unittest discover -s tests -p 'test_asr_agent.py' -v
+python -m unittest discover -s tests -p 'test_lsk_agent.py' -v
 python -m unittest discover -s tests -p 'test_gateway_agent.py' -v
 ```
 
-Model inference requires valid runtime IAM permissions and enabled access in the actual AWS account. Unit tests mock the model and upstream APIs; they are not live AWS integration tests. The agent is bounded by a maximum of three tool rounds, but does not yet implement per-user/per-record authorization, hard token-budget controls, event telemetry or rigorous grounding evaluations. Do not claim deployments, real customer adoption, measured time savings or actual ASR business integrations.
+Model inference requires valid runtime IAM permissions and enabled access in the actual AWS account. Unit tests mock the model and upstream APIs; they are not live AWS integration tests. The agent is bounded by a maximum of three tool rounds, but does not yet implement per-user/per-record authorization, hard token-budget controls, event telemetry or rigorous grounding evaluations. Do not claim deployments, real customer adoption, measured time savings or actual LSK business integrations.

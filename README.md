@@ -1,6 +1,6 @@
 # LSK Enterprise AI Enablement — Production Release Blocked
 
-> **PRODUCTION RELEASE NOT AUTHORIZED.** This branch contains the Bedrock/LangGraph code and regression guards but only a synthetic ASR Group-inspired commercial demonstration. It has no verified enterprise SSO, audit-grade authorization, approved networking, real business integrations, on-call SLOs, or deployment signoff. The demo's proposal/reviewer endpoints are disabled. Do **not** expose the current services to real users or place confidential data into them. See [release gates](docs/RELEASE_AUDIT.md).
+> **PRODUCTION RELEASE NOT AUTHORIZED.** This branch contains the Bedrock/LangGraph code and regression guards but only a synthetic LSK-inspired commercial demonstration. It has no verified enterprise SSO, audit-grade authorization, approved networking, real business integrations, on-call SLOs, or deployment signoff. The demo's proposal/reviewer endpoints are disabled. Do **not** expose the current services to real users or place confidential data into them. See [release gates](docs/RELEASE_AUDIT.md).
 
 
 ## Integrated business applications (Sales · Marketing · Finance)

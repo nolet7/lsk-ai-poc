@@ -1,7 +1,7 @@
 # Production release gate and operating runbook — NOT APPROVED
 
-This branch is a **production-stage scaffold**, not an operationally approved ASR Group system.
-All data must remain synthetic. No actual ASR Group sponsorship or deployment is asserted.
+This branch is a **production-stage scaffold**, not an operationally approved LSK system.
+All data must remain synthetic. No actual LSK sponsorship or deployment is asserted.
 
 ## Mandatory predeployment controls
 - OIDC/JWT-signed user and service identity; authorize domain and each record at every backend. Remove trust in X-Actor/X-Role.
