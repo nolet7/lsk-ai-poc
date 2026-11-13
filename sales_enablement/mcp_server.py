@@ -1,4 +1,5 @@
 """Optional MCP protocol server: read-only CRM tools, no write tools exposed."""
+import asyncio
 from sales_enablement import store, intelligence
 try:
     from mcp.server.fastmcp import FastMCP
@@ -14,13 +15,13 @@ def list_sales_accounts() -> list[dict]:
     return store.list_accounts()
 
 @mcp.tool()
-def get_sales_account_brief(account_id: str) -> dict:
+async def get_sales_account_brief(account_id: str) -> dict:
     """Generate a grounded brief for a synthetic account (read-only)."""
-    store.initialize()
-    account=store.get_account(account_id)
+    await asyncio.to_thread(store.initialize)
+    account=await asyncio.to_thread(store.get_account, account_id)
     if account is None:
         return {"error":"Account not found"}
-    return intelligence.account_brief(account)
+    return await intelligence.account_brief(account)
 
 if __name__=="__main__":
     # Local stdio transport is for a trusted local client only.
