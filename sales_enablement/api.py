@@ -1,5 +1,6 @@
 """FastAPI business workflow. Synthetic accounts only; no external CRM writes."""
 import os
+import asyncio
 from pathlib import Path
 import secrets
 from contextlib import asynccontextmanager
@@ -44,34 +45,34 @@ def health():
     return {"status":"ok"}
 
 @app.get("/accounts")
-def accounts(actor: str=Depends(identity)):
-    return store.list_accounts()
+async def accounts(actor: str=Depends(identity)):
+    return await asyncio.to_thread(store.list_accounts)
 
 @app.get("/accounts/{account_id}/brief")
-def brief(account_id: str,actor: str=Depends(identity)):
-    account=store.get_account(account_id)
+async def brief(account_id: str,actor: str=Depends(identity)):
+    account=await asyncio.to_thread(store.get_account, account_id)
     if not account:
         raise HTTPException(404,"Account not found")
     try:
-        return intelligence.account_brief(account)
+        return await intelligence.account_brief(account)
     except RuntimeError as exc:
         raise HTTPException(502,str(exc)) from exc
 
 @app.post("/change-requests",status_code=201)
-def create_change(payload: ChangeRequest,actor: str=Depends(identity)):
+async def create_change(payload: ChangeRequest,actor: str=Depends(identity)):
     try:
-        return store.request_change(payload.account_id,payload.proposed_note,payload.reason,actor)
+        return await asyncio.to_thread(store.request_change,payload.account_id,payload.proposed_note,payload.reason,actor)
     except KeyError:
         raise HTTPException(404,"Account not found")
 
 @app.get("/change-requests")
-def change_requests(actor: str=Depends(identity)):
-    return store.list_approvals()
+async def change_requests(actor: str=Depends(identity)):
+    return await asyncio.to_thread(store.list_approvals)
 
 @app.post("/change-requests/{approval_id}/decision")
-def decide(approval_id: str,payload: Decision,actor: str=Depends(reviewer)):
+async def decide(approval_id: str,payload: Decision,actor: str=Depends(reviewer)):
     try:
-        return store.decide(approval_id,actor,payload.approve)
+        return await asyncio.to_thread(store.decide,approval_id,actor,payload.approve)
     except KeyError:
         raise HTTPException(404,"Approval not found")
     except PermissionError as exc:
@@ -80,8 +81,8 @@ def decide(approval_id: str,payload: Decision,actor: str=Depends(reviewer)):
         raise HTTPException(409,str(exc)) from exc
 
 @app.get("/audit-events")
-def audit_events(actor: str=Depends(reviewer)):
-    return store.list_events()
+async def audit_events(actor: str=Depends(reviewer)):
+    return await asyncio.to_thread(store.list_events)
 
 @app.get("/portal", include_in_schema=False)
 def portal():
