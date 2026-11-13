@@ -13,3 +13,4 @@ data/*.sqlite3
 # Local checkouts and integration secrets
 external/
 .env.business
+infrastructure/config.env
