@@ -1,3 +1,5 @@
+> **AI maturity (POC):** The original LangGraph report pipeline is deterministic and does not call a generative model. Business service insights optionally use OpenAI-compatible LLM APIs when configured; the gateway now also exposes a read-only, explicitly model-backed AWS Bedrock endpoint at `POST /v1/ai/analyze`. See [AI model setup and limitations](docs/AI_MODEL_INTEGRATION.md). Neither path is an autonomous production agent, and model access/permissions have not been verified in AWS.
+
 # Production AI Platform — Fully Commented Code
 
 ## Integrated business applications (Sales · Marketing · Finance)
