@@ -16,8 +16,8 @@
   {
     "id": "marketing-holiday",
     "domain": "marketing",
-    "question": "Explain the LSK Baking Holiday Baking Campaign performance using marketing records and calculated CTR. Cite the campaign record domino-holiday.",
-    "required_record_ids": ["domino-holiday"],
+    "question": "Explain the LSK Holiday Baking Campaign performance using marketing records and calculated CTR. Cite the campaign record lsk-holiday.",
+    "required_record_ids": ["lsk-holiday"],
     "forbidden_phrases": ["campaign achieved its target", "real customer", "guaranteed ROI"]
   },
   {
