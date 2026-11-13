@@ -100,6 +100,7 @@ async def proposals(domain: str, actor: str = Depends(identity)):
 
 @app.post("/v1/apps/{domain}/proposals", status_code=201)
 async def propose(domain: str, payload: Proposal, actor: str = Depends(identity)):
+    require_demo_mutation_permission()
     return await forward(domain, "/v1/proposals", actor, "POST", payload.model_dump())
 
 @app.post("/v1/apps/{domain}/proposals/{proposal_id}/decision")
@@ -108,6 +109,7 @@ async def decide(domain: str, proposal_id: str, payload: Decision,
                  actor: str = Depends(identity)):
     if x_role != "reviewer":
         raise HTTPException(status_code=403, detail="Reviewer role required (demo only)")
+    require_demo_mutation_permission()
     return await forward(domain, "/v1/proposals/" + quote(proposal_id, safe="") + "/decision", actor,
                          "POST", payload.model_dump(), reviewer=True)
 
@@ -115,6 +117,7 @@ async def decide(domain: str, proposal_id: str, payload: Decision,
 async def audit(domain: str, x_role: str | None = Header(default=None), actor: str = Depends(identity)):
     if x_role != "reviewer":
         raise HTTPException(status_code=403, detail="Reviewer role required (demo only)")
+    require_demo_mutation_permission()
     return await forward(domain, "/v1/audit", actor, reviewer=True)
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -127,3 +130,60 @@ a{color:#1764a5}article{background:white;border-radius:10px;padding:20px;margin:
 <article><h2>Marketing Intelligence</h2><a href="http://localhost:8102/portal">Open Marketing Portal</a></article>
 <article><h2>Finance Exception Review</h2><a href="http://localhost:8103/portal">Open Finance Portal</a></article>
 <p>Developer API: <a href="/docs">Gateway Swagger docs</a>. Synthetic demo only, not enterprise SSO.</p></body></html>"""
+
+# Real model-backed, read-only AI analysis; never applies proposals.
+from integrations.bedrock_ai import analyze_with_bedrock, ModelUnavailable
+
+class AIAnalyzeRequest(BaseModel):
+    domain: str
+    record_id: str = Field(min_length=1, max_length=100)
+    question: str = Field(min_length=3, max_length=2000)
+
+@app.post("/v1/ai/analyze")
+async def ai_analyze(payload: AIAnalyzeRequest, actor: str = Depends(identity)):
+    service_url(payload.domain)  # enforce the fixed domain allow-list
+    from urllib.parse import quote as urlquote
+    evidence = await forward(payload.domain,
+                             "/v1/records/" + urlquote(payload.record_id, safe="") + "/insight",
+                             actor)
+    try:
+        return await analyze_with_bedrock(payload.domain, payload.record_id, payload.question, evidence)
+    except (ModelUnavailable, ValueError) as exc:
+        raise HTTPException(status_code=503 if isinstance(exc, ModelUnavailable) else 422,
+                            detail=str(exc)) from exc
+
+# Bounded, model-directed LangGraph workflow for ASR-themed commercial use cases.
+# Distinct from the legacy deterministic report graph.
+from integrations.asr_agent import run_commercial_agent, AgentError
+
+class CommercialAgentRequest(BaseModel):
+    question: str = Field(min_length=3, max_length=2000)
+    allow_proposals: bool = False
+
+@app.post("/v1/agent/run")
+async def commercial_agent(body: CommercialAgentRequest, actor: str = Depends(identity)):
+    if body.allow_proposals:
+        require_demo_mutation_permission()
+    async def business_tool(domain, path, who, method="GET", payload=None):
+        return await forward(domain, path, who, method=method, payload=payload)
+    try:
+        return await run_commercial_agent(
+            body.question, actor, business_tool, allow_proposals=body.allow_proposals,
+        )
+    except AgentError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+def require_demo_mutation_permission() -> None:
+    """No demo write/reviewer endpoint may operate on pilot/production.
+
+    POC users must explicitly enable the unsafe simulation locally.
+    Verified identity must replace these headers before any real-world writes.
+    """
+    if not (os.getenv("LSK_STAGE", "").lower() == "poc" and
+            os.getenv("LSK_ENABLE_DEMO_WRITES", "").lower() == "true"):
+        raise HTTPException(
+            status_code=403,
+            detail="Demo mutations disabled; available only in isolated POC with explicit opt-in",
+        )
