@@ -13,6 +13,7 @@ on:
       - 'tests/test_operational_contract.py'
       - 'tests/test_oidc_stage.py'
       - 'tests/test_oidc_crypto.py'
+      - 'tests/test_branch_stage.py'
       - 'tests/test_asr_evaluation.py'
       - 'scripts/smoke_integration.py'
       - 'evaluation/fixtures/asr_golden.json'
@@ -48,6 +49,7 @@ jobs:
           python -m unittest discover -s tests -p test_operational_contract.py -v
           python -m unittest discover -s tests -p test_oidc_stage.py -v
           python -m unittest discover -s tests -p test_oidc_crypto.py -v
+          python -m unittest discover -s tests -p test_branch_stage.py -v
           python -m unittest discover -s tests -p test_asr_evaluation.py -v
       - name: Shell script syntax
         run: |
