@@ -156,6 +156,12 @@ async def run_commercial_agent(
                 "tool_rounds":state["tool_rounds"]+1,"trace":trace}
 
     def finish_node(state: WorkflowState) -> dict:
+        # Do not present unguided model prose as evidence-backed enterprise analysis.
+        verified = any(t.get("status") == "success" and t.get("tool") in ("list_records","get_insight")
+                       for t in state["trace"])
+        if not verified:
+            return {"answer":"No verified business records were retrieved. I cannot provide a grounded commercial analysis.",
+                    "finish_reason":"no_verified_evidence"}
         blocks = state["messages"][-1].get("content", [])
         answer = "\n".join(b["text"] for b in blocks if isinstance(b,dict) and isinstance(b.get("text"),str)).strip()
         if not answer:
