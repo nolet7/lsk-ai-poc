@@ -11,10 +11,12 @@ import os
 from typing import Any, Awaitable, Callable, TypedDict
 
 from langgraph.graph import StateGraph, END
-from integrations.observability import MODEL_CALLS
+from integrations.observability import MODEL_CALLS, MODEL_TOKENS
 
 ALLOWED_DOMAINS = ("sales", "marketing", "finance")
 MAX_TOOL_ROUNDS = 3
+# A conservative per-process limit. Production needs distributed quotas too.
+_MODEL_CAPACITY = asyncio.Semaphore(2)
 MAX_CONTEXT_CHARS = 12000
 
 SYSTEM_PROMPT = """You are a forward-deployed enterprise AI assistant for a fictional
@@ -65,7 +67,12 @@ def _client_converse(messages: list[dict], tools: list[dict], system: str, model
         import boto3
     except ImportError as exc:
         raise AgentError("Install boto3 to use AWS Bedrock") from exc
-    client = boto3.client("bedrock-runtime", region_name=os.getenv("AWS_REGION", "us-east-1"))
+    from botocore.config import Config
+    client = boto3.client(
+        "bedrock-runtime", region_name=os.getenv("AWS_REGION", "us-east-1"),
+        config=Config(connect_timeout=3, read_timeout=40,
+                      retries={"max_attempts":2,"mode":"standard"}),
+    )
     return client.converse(modelId=model_id, messages=messages,
                           system=[{"text":system}], toolConfig={"tools":tools},
                           inferenceConfig={"maxTokens":900,"temperature":0})
@@ -84,14 +91,27 @@ async def run_commercial_agent(
     allowed_names = {tool["toolSpec"]["name"] for tool in tools}
     async def model_node(state: WorkflowState) -> dict:
         try:
-            if converse is None:
-                response = await asyncio.to_thread(_client_converse, state["messages"], tools, SYSTEM_PROMPT, model_id)
-            else:
-                response = await converse(state["messages"], tools, SYSTEM_PROMPT, model_id)
+            async with _MODEL_CAPACITY:
+                if converse is None:
+                    response = await asyncio.wait_for(
+                        asyncio.to_thread(_client_converse, state["messages"], tools, SYSTEM_PROMPT, model_id),
+                        timeout=45,
+                    )
+                else:
+                    response = await asyncio.wait_for(
+                        converse(state["messages"], tools, SYSTEM_PROMPT, model_id),
+                        timeout=45,
+                    )
             message = response["output"]["message"]
             blocks = message["content"]
             if not isinstance(blocks,list) or not blocks:
                 raise ValueError("empty model content")
+            usage = response.get("usage", {})
+            if isinstance(usage, dict):
+                for direction, field in (("input","inputTokens"),("output","outputTokens")):
+                    count = usage.get(field)
+                    if isinstance(count, int) and not isinstance(count, bool) and 0 <= count <= 10_000_000:
+                        MODEL_TOKENS.labels(direction).inc(count)
             MODEL_CALLS.labels("success").inc()
             return {"messages": state["messages"] + [message]}
         except (AgentError, ValueError, KeyError, TypeError) as exc:
