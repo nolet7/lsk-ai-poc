@@ -29,18 +29,17 @@ Save Report Agent
 # Import datetime so report filenames can include the current date and time.
 from datetime import datetime
 
-# Import Path for operating-system-independent file and directory handling.
-from pathlib import Path
-
 # Import regular expressions for safe report filename normalization.
 import re
 
+# Import uuid so concurrent runs in the same second never overwrite each other.
+import uuid
+
+# Import the project settings for the report output directory.
+from config import settings
+
 # Import the RAG retrieval function used to search enterprise knowledge.
 from rag.retriever import retrieve_context
-
-
-# Define the directory where generated reports will be stored.
-OUTPUT_DIR = Path("data/outputs")
 
 
 def search_enterprise_knowledge(query: str) -> list[dict]:
@@ -151,7 +150,7 @@ def save_report_file(title: str, content: str) -> dict[str, str]:
         raise ValueError("Report content cannot be empty.")
 
     # Create the output directory and any missing parent directories.
-    OUTPUT_DIR.mkdir(
+    settings.output_dir.mkdir(
         parents=True,
         exist_ok=True,
     )
@@ -171,11 +170,14 @@ def save_report_file(title: str, content: str) -> dict[str, str]:
     if not safe_title:
         safe_title = "production_ai_platform_report"
 
-    # Create a timestamp to prevent report filename collisions.
+    # Create a timestamp so reports sort chronologically.
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+    # Add a short random suffix so two saves in the same second never collide.
+    suffix = uuid.uuid4().hex[:8]
+
     # Build the final Markdown file path.
-    path = OUTPUT_DIR / f"{safe_title}_{timestamp}.md"
+    path = settings.output_dir / f"{safe_title}_{timestamp}_{suffix}.md"
 
     # Write the report using UTF-8 so international text is preserved.
     path.write_text(

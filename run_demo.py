@@ -83,8 +83,14 @@ def main() -> None:
     # Echo the question processed by the agents.
     print("Question:", result["question"])
 
-    # Show where the approved Markdown report was saved.
-    print("Report saved to:", result["report_path"])
+    # Show the quality-gate outcome; a rejected run saves no report.
+    print("Status:", result["status"])
+
+    # Show where the approved Markdown report was saved, or why nothing was saved.
+    if result["status"] == "approved":
+        print("Report saved to:", result["report_path"])
+    else:
+        print("No report saved: the run was rejected after", result["review_attempts"], "review attempt(s).")
 
     # Display the Reviewer Agent's approval or correction notes.
     print("Review notes:", result["review_notes"])

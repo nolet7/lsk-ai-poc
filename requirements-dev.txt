@@ -1,0 +1,5 @@
+# Development and CI tooling. Installs the locked runtime set first.
+-r requirements.txt
+
+pytest==9.2.0
+ruff==0.17.5

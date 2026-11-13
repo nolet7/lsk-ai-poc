@@ -1,0 +1,25 @@
+# Version control and local tooling
+.git
+.github
+.gitignore
+.dockerignore
+.ruff_cache
+.pytest_cache
+plannning
+
+# Local environments and secrets: never bake these into an image
+venv
+.venv
+.env
+
+# Generated state: the index is rebuilt by the ingest job and mounted as a volume
+data/chroma_db
+data/outputs
+__pycache__
+**/__pycache__
+*.pyc
+
+# Development-only files
+tests
+Dockerfile
+docker-compose.yml

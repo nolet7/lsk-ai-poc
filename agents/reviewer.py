@@ -3,12 +3,20 @@ FILE PURPOSE: Reviewer Agent
 
 This file performs quality checks on the generated report. It verifies that
 required report sections exist and that the report is long enough for
-executive review.
+executive review. Every evaluation counts as one attempt, which the graph
+uses to stop an endless Writer -> Reviewer loop.
 
 Flow:
 Writer -> Reviewer -> Save Report when approved
-                  -> Writer when rejected
+                  -> Writer when rejected and attempts remain
+                  -> END when rejected and no attempts remain
 """
+
+# Import the rejection counter so quality-gate failures are visible in metrics.
+from monitoring.metrics import REVIEW_REJECTIONS
+
+# Minimum report length, in characters, accepted for executive review.
+MIN_REPORT_CHARS = 500
 
 
 def reviewer_agent(state: dict) -> dict:
@@ -16,6 +24,9 @@ def reviewer_agent(state: dict) -> dict:
 
     # Read the draft produced by the Writer Agent.
     report = state["draft_report"]
+
+    # Count this evaluation as one attempt.
+    state["review_attempts"] = state.get("review_attempts", 0) + 1
 
     # Create a list for quality-review messages.
     notes: list[str] = []
@@ -43,18 +54,21 @@ def reviewer_agent(state: dict) -> dict:
             approved = False
 
     # Reject reports that are too short for executive review.
-    if len(report) < 500:
+    if len(report) < MIN_REPORT_CHARS:
         notes.append("Report is too short for executive review.")
         approved = False
 
     # Add a success message when all checks pass.
     if approved:
         notes.append(
-            "Approved. Report is complete and portfolio-ready."
+            "Approved. Report passed all required section and length checks."
         )
 
         # Promote the approved draft to final report content.
         state["final_report"] = report
+    else:
+        # Count the rejection so alerts can fire on a rising rejection rate.
+        REVIEW_REJECTIONS.inc()
 
     # Store all review notes as one newline-separated string.
     state["review_notes"] = "\n".join(notes)
@@ -63,5 +77,4 @@ def reviewer_agent(state: dict) -> dict:
     state["approved"] = approved
 
     # Return the updated state.
-    # The original code omitted this return statement.
     return state

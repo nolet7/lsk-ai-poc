@@ -1,0 +1,8 @@
+{"question": "What human approval is required for high-risk AI decisions?", "expected_source": "ai_governance_policy.txt"}
+{"question": "Who owns AI governance and how are incidents escalated?", "expected_source": "ai_governance_policy.txt"}
+{"question": "Which access and audit controls must enterprise AI systems include?", "expected_source": "ai_governance_policy.txt"}
+{"question": "Which components should a production AI platform include?", "expected_source": "enterprise_ai_architecture.txt"}
+{"question": "How do multi-agent workflows divide complex tasks?", "expected_source": "enterprise_ai_architecture.txt"}
+{"question": "Why do production systems need health checks and observability?", "expected_source": "enterprise_ai_architecture.txt"}
+{"question": "How should retrieval quality and answer grounding be monitored in RAG?", "expected_source": "rag_best_practices.txt"}
+{"question": "What steps does a RAG system need before it can answer with enterprise knowledge?", "expected_source": "rag_best_practices.txt"}

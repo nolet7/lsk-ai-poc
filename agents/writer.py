@@ -100,7 +100,8 @@ def writer_agent(state: dict) -> dict:
 
 ## Conclusion
 
-This platform demonstrates a production-style AI architecture combining agents, RAG, MCP-style tools, evaluation, monitoring, API serving, and local report generation.
+This platform demonstrates a production-style AI architecture combining agents, RAG,
+MCP-style tools, evaluation, monitoring, API serving, and local report generation.
 """
 
     # Store the report as the draft reviewed by the Reviewer Agent.

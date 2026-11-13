@@ -3,19 +3,32 @@ FILE PURPOSE: LangGraph Orchestration
 
 This file connects all agents into one executable multi-agent workflow.
 It defines shared state, registers workflow nodes, creates edges, routes
-review decisions, compiles the graph, and runs the platform.
+review decisions with a retry cap, compiles the graph once, and runs it.
 
 Workflow:
 Planner -> Researcher -> Analyst -> Writer -> Reviewer
                                            | approved -> Save Report -> END
-                                           | rejected -> Writer
+                                           | rejected, attempts left -> Writer
+                                           | rejected, no attempts left -> END
 """
+
+# Import functools to compile the graph once per process.
+from functools import lru_cache
+
+# Import logging for workflow lifecycle events.
+import logging
+
+# Import uuid to give every run a unique identifier.
+import uuid
 
 # Import types used to describe the shared workflow state.
 from typing import TypedDict, List, Dict, Any
 
 # Import the LangGraph builder and END marker.
 from langgraph.graph import StateGraph, END
+
+# Import the project settings for the review retry cap.
+from config import settings
 
 # Import each specialized agent.
 from agents.planner import planner_agent
@@ -25,9 +38,18 @@ from agents.writer import writer_agent
 from agents.reviewer import reviewer_agent
 from agents.save_report import save_report_agent
 
+# Import the metrics helpers for per-agent timing and run outcomes.
+from monitoring.metrics import WORKFLOW_RUNS, timed_agent
+
+# Create the module logger for workflow lifecycle events.
+logger = logging.getLogger(__name__)
+
 
 class PlatformState(TypedDict):
     """Shared data passed between every workflow agent."""
+
+    # Unique identifier for this workflow run, used in logs and API responses.
+    run_id: str
 
     # Original business or technical question.
     question: str
@@ -47,6 +69,9 @@ class PlatformState(TypedDict):
     # Feedback created by the Reviewer Agent.
     review_notes: str
 
+    # Number of times the Reviewer Agent has evaluated a draft.
+    review_attempts: int
+
     # Approved Markdown report.
     final_report: str
 
@@ -56,31 +81,39 @@ class PlatformState(TypedDict):
     # Approval decision used for graph routing.
     approved: bool
 
+    # Final outcome: pending, approved, or rejected.
+    status: str
+
 
 def review_router(state: PlatformState) -> str:
-    """Route the report according to the review decision."""
+    """Route the report according to the review decision and retry budget."""
 
     # Send an approved report to the saving node.
     if state["approved"]:
         return "save_report"
 
-    # Send a rejected report back to the Writer Agent.
-    return "writer"
+    # Give the Writer another attempt while the retry budget lasts.
+    if state["review_attempts"] < settings.max_review_attempts:
+        return "writer"
+
+    # Stop the workflow without saving once the retry budget is exhausted.
+    return "end"
 
 
+@lru_cache(maxsize=1)
 def build_platform_graph():
-    """Build and compile the Production AI Platform workflow."""
+    """Build and compile the Production AI Platform workflow once per process."""
 
     # Create a LangGraph workflow that uses PlatformState.
     graph = StateGraph(PlatformState)
 
-    # Register every agent as a graph node.
-    graph.add_node("planner", planner_agent)
-    graph.add_node("researcher", researcher_agent)
-    graph.add_node("analyst", analyst_agent)
-    graph.add_node("writer", writer_agent)
-    graph.add_node("reviewer", reviewer_agent)
-    graph.add_node("save_report", save_report_agent)
+    # Register every agent as a timed graph node.
+    graph.add_node("planner", timed_agent("planner")(planner_agent))
+    graph.add_node("researcher", timed_agent("researcher")(researcher_agent))
+    graph.add_node("analyst", timed_agent("analyst")(analyst_agent))
+    graph.add_node("writer", timed_agent("writer")(writer_agent))
+    graph.add_node("reviewer", timed_agent("reviewer")(reviewer_agent))
+    graph.add_node("save_report", timed_agent("save_report")(save_report_agent))
 
     # Make the Planner Agent the first workflow node.
     graph.set_entry_point("planner")
@@ -99,8 +132,11 @@ def build_platform_graph():
             # Approved reports move to persistence.
             "save_report": "save_report",
 
-            # Rejected reports return to the writer.
+            # Rejected reports return to the writer while attempts remain.
             "writer": "writer",
+
+            # Rejected reports with no attempts left end without saving.
+            "end": END,
         },
     )
 
@@ -112,40 +148,58 @@ def build_platform_graph():
 
 
 def run_platform(question: str) -> PlatformState:
-    """Run the complete multi-agent workflow for one question."""
+    """
+    Run the complete multi-agent workflow for one question.
 
-    # Build the executable application.
+    Args:
+        question:
+            Business or technical question to answer.
+
+    Returns:
+        The completed workflow state, including run_id and status.
+
+    Raises:
+        Any exception raised by an agent, such as IndexNotReadyError when the
+        knowledge index is missing. The outcome is counted before re-raising.
+    """
+
+    # Build the executable application; this is cached after the first call.
     app = build_platform_graph()
 
     # Initialize every field required by PlatformState.
+    run_id = uuid.uuid4().hex
     initial_state: PlatformState = {
-        # Store the submitted user question.
+        "run_id": run_id,
         "question": question,
-
-        # The Planner Agent will populate this field.
         "plan": [],
-
-        # The Researcher Agent will populate this field.
         "research_context": [],
-
-        # The Analyst Agent will populate this field.
         "analysis": {},
-
-        # The Writer Agent will populate this field.
         "draft_report": "",
-
-        # The Reviewer Agent will populate this field.
         "review_notes": "",
-
-        # The Writer or Reviewer will populate this field.
+        "review_attempts": 0,
         "final_report": "",
-
-        # The Save Report Agent will populate this field.
         "report_path": "",
-
-        # Reports start unapproved.
         "approved": False,
+        "status": "pending",
     }
 
-    # Execute the graph and return the completed workflow state.
-    return app.invoke(initial_state)
+    # Execute the graph, counting failures so they show up in dashboards.
+    try:
+        result = app.invoke(initial_state)
+    except Exception:
+        WORKFLOW_RUNS.labels(outcome="error").inc()
+        logger.exception("workflow failed run_id=%s", run_id)
+        raise
+
+    # Record the final decision on the state and in metrics.
+    result["status"] = "approved" if result["approved"] else "rejected"
+    WORKFLOW_RUNS.labels(outcome=result["status"]).inc()
+    logger.info(
+        "workflow finished run_id=%s status=%s review_attempts=%d",
+        result["run_id"],
+        result["status"],
+        result["review_attempts"],
+    )
+
+    # Return the completed workflow state.
+    return result

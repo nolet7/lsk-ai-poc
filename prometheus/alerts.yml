@@ -1,0 +1,58 @@
+# Alerting rules for the Production AI Platform. Each alert links to the runbook in README.md.
+groups:
+  - name: ai-platform
+    rules:
+      - alert: AIPlatformDown
+        expr: up{job="ai-platform"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AI Platform API is not responding to Prometheus scrapes."
+          runbook: "README.md#runbook-api-is-down"
+
+      - alert: AIPlatformHighErrorRate
+        # /ready returns 503 by design until ingestion finishes, so it is excluded.
+        expr: |
+          sum(rate(http_requests_total{job="ai-platform", status=~"5..", handler!="/ready"}[5m]))
+            /
+          sum(rate(http_requests_total{job="ai-platform", handler!="/ready"}[5m])) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 5% of API requests are failing with 5xx errors."
+          runbook: "README.md#runbook-high-error-rate"
+
+      - alert: AIPlatformRunLatencyHigh
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(http_request_duration_seconds_bucket{job="ai-platform", handler="/run"}[10m]))
+          ) > 10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 latency for POST /run is above 10 seconds."
+          runbook: "README.md#runbook-slow-runs"
+
+      - alert: AIPlatformReviewRejectionsHigh
+        expr: |
+          sum(rate(platform_workflow_runs_total{job="ai-platform", outcome="rejected"}[30m]))
+            /
+          sum(rate(platform_workflow_runs_total{job="ai-platform"}[30m])) > 0.2
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 20% of workflow runs are rejected by the Reviewer quality gate."
+          runbook: "README.md#runbook-rejections-rising"
+
+      - alert: AIPlatformIndexEmpty
+        expr: platform_index_chunks{job="ai-platform"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "The knowledge index is empty; questions will fail with 503."
+          runbook: "README.md#runbook-index-empty"

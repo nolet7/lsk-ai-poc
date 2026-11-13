@@ -1,0 +1,55 @@
+# Local production-like stack: one-shot ingestion, the API, and Prometheus.
+#
+#   docker compose up --build
+#
+# Startup order: ingest runs to completion, then api starts and must pass its
+# health check, then prometheus starts scraping.
+
+services:
+  ingest:
+    build: .
+    image: production-ai-platform:0.2.0
+    command: ["python", "-m", "rag.ingest"]
+    environment:
+      PLATFORM_LOG_LEVEL: ${PLATFORM_LOG_LEVEL:-INFO}
+    volumes:
+      - ./data/docs:/app/data/docs:ro
+      - chroma-data:/app/data/chroma_db
+    restart: "no"
+
+  api:
+    build: .
+    image: production-ai-platform:0.2.0
+    depends_on:
+      ingest:
+        condition: service_completed_successfully
+    environment:
+      PLATFORM_API_KEY: ${PLATFORM_API_KEY:-}
+      PLATFORM_LOG_LEVEL: ${PLATFORM_LOG_LEVEL:-INFO}
+    ports:
+      # Bound to loopback: authentication is off unless PLATFORM_API_KEY is set.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data/docs:/app/data/docs:ro
+      - chroma-data:/app/data/chroma_db
+      - report-outputs:/app/data/outputs
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  chroma-data:
+  report-outputs:

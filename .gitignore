@@ -1,4 +1,24 @@
-.env
-venv/
+# Python bytecode and build output
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+venv/
+.venv/
+
+# Secrets and local settings: commit .env.example instead
+.env
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Generated runtime state: rebuilt by `python -m rag.ingest` and the API
+data/chroma_db/
+data/outputs/*
+!data/outputs/.gitkeep
