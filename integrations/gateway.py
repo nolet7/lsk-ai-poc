@@ -148,3 +148,24 @@ async def ai_analyze(payload: AIAnalyzeRequest, actor: str = Depends(identity)):
     except (ModelUnavailable, ValueError) as exc:
         raise HTTPException(status_code=503 if isinstance(exc, ModelUnavailable) else 422,
                             detail=str(exc)) from exc
+
+# Bounded, model-directed LangGraph workflow for ASR-themed commercial use cases.
+# Distinct from the legacy deterministic report graph.
+from integrations.asr_agent import run_commercial_agent, AgentError
+
+class CommercialAgentRequest(BaseModel):
+    question: str = Field(min_length=3, max_length=2000)
+    allow_proposals: bool = False
+
+@app.post("/v1/agent/run")
+async def commercial_agent(body: CommercialAgentRequest, actor: str = Depends(identity)):
+    async def business_tool(domain, path, who, method="GET", payload=None):
+        return await forward(domain, path, who, method=method, payload=payload)
+    try:
+        return await run_commercial_agent(
+            body.question, actor, business_tool, allow_proposals=body.allow_proposals,
+        )
+    except AgentError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
