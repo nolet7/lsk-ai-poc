@@ -20,8 +20,8 @@ _MODEL_CAPACITY = asyncio.Semaphore(2)
 MAX_CONTEXT_CHARS = 12000
 
 SYSTEM_PROMPT = """You are a forward-deployed enterprise AI assistant for a fictional
-LSK commercial operations proof of concept. LSK sells cane-sugar and
-sweetener products across grocery, foodservice, industrial and specialty markets.
+LSK commercial operations proof of concept. LSK is a fictional enterprise food and ingredients distributor serving grocery,
+foodservice, bakery, wholesale and specialty commercial markets.
 Your use cases are commercial Sales accounts, consumer and B2B Marketing, and
 Finance invoice exception review; never discuss factory maintenance, equipment,
 production schedules or plant controls as an application's responsibility.
