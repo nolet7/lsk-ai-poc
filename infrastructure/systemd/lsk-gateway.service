@@ -15,7 +15,7 @@ Environment=APP_DOMAIN=gateway
 Environment=SALES_SERVICE_URL=http://127.0.0.1:8101
 Environment=MARKETING_SERVICE_URL=http://127.0.0.1:8102
 Environment=FINANCE_SERVICE_URL=http://127.0.0.1:8103
-ExecStart=/opt/lsk-ai-poc/.venv-asr/bin/python -m uvicorn integrations.gateway:app --host 127.0.0.1 --port 8090
+ExecStart=/opt/lsk-ai-poc/.venv-lsk/bin/python -m uvicorn integrations.gateway:app --host 127.0.0.1 --port 8090
 Restart=on-failure
 RestartSec=3
 TimeoutStopSec=15

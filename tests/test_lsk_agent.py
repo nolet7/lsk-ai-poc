@@ -2,7 +2,7 @@ import asyncio
 import os
 import unittest
 from unittest.mock import patch
-from integrations.asr_agent import run_commercial_agent, AgentError
+from integrations.lsk_agent import run_commercial_agent, AgentError
 
 def first(messages, tools, system, model):
     return {"output":{"message":{"role":"assistant","content":[{"toolUse":{

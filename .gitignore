@@ -14,7 +14,7 @@ data/*.sqlite3
 external/
 .env.business
 
-# Native Python ASR commercial demo
-.venv-asr/
-.run-asr/
+# Native Python LSK commercial demo
+.venv-lsk/
+.run-lsk/
 infrastructure/config.env

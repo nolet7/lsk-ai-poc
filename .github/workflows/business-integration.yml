@@ -8,15 +8,15 @@ on:
       - 'tests/test_gateway_ai.py'
       - 'tests/test_gateway_agent.py'
       - 'tests/test_bedrock_ai.py'
-      - 'tests/test_asr_agent.py'
+      - 'tests/test_lsk_agent.py'
       - 'tests/test_release_guard.py'
       - 'tests/test_operational_contract.py'
       - 'tests/test_oidc_stage.py'
       - 'tests/test_oidc_crypto.py'
       - 'tests/test_branch_stage.py'
-      - 'tests/test_asr_evaluation.py'
+      - 'tests/test_lsk_evaluation.py'
       - 'scripts/smoke_integration.py'
-      - 'evaluation/fixtures/asr_golden.json'
+      - 'evaluation/fixtures/lsk_golden.json'
       - 'compose.business.yml'
       - 'scripts/**'
       - 'integrations/app-versions.env'
@@ -44,13 +44,13 @@ jobs:
           python -m unittest discover -s tests -p test_gateway_ai.py -v
           python -m unittest discover -s tests -p test_gateway_agent.py -v
           python -m unittest discover -s tests -p test_bedrock_ai.py -v
-          python -m unittest discover -s tests -p test_asr_agent.py -v
+          python -m unittest discover -s tests -p test_lsk_agent.py -v
           python -m unittest discover -s tests -p test_release_guard.py -v
           python -m unittest discover -s tests -p test_operational_contract.py -v
           python -m unittest discover -s tests -p test_oidc_stage.py -v
           python -m unittest discover -s tests -p test_oidc_crypto.py -v
           python -m unittest discover -s tests -p test_branch_stage.py -v
-          python -m unittest discover -s tests -p test_asr_evaluation.py -v
+          python -m unittest discover -s tests -p test_lsk_evaluation.py -v
       - name: Shell script syntax
         run: |
           for script in scripts/*.sh infrastructure/*.sh; do bash -n "$script"; done
