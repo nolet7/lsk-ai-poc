@@ -7,6 +7,7 @@ The caller identity is always derived from the validated JWT's 'sub' claim.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 import urllib.parse
 from dataclasses import dataclass
 from functools import lru_cache
@@ -22,9 +23,21 @@ class Principal:
 
 
 def stage() -> str:
-    value = os.getenv("LSK_STAGE", "poc").lower()
-    if value not in ("poc", "pilot", "production"):
-        raise HTTPException(status_code=503, detail="Invalid release stage")
+    """The branch's signed/reviewed stage marker is the default, never POC."""
+    marker = Path(__file__).with_name("release-stage.env")
+    try:
+        lines = marker.read_text(encoding="utf-8").splitlines()
+        discovered = [line.split("=", 1)[1].strip() for line in lines
+                      if line.startswith("LSK_STAGE=")]
+        if len(discovered) != 1 or discovered[0] not in ("poc", "pilot", "production"):
+            raise ValueError("Unexpected release-stage marker")
+        committed_stage = discovered[0]
+    except (OSError, ValueError) as exc:
+        raise HTTPException(status_code=503, detail="Release stage not established") from exc
+    value = os.getenv("LSK_STAGE", committed_stage).lower()
+    # Do not permit an environment variable to downgrade a staged checkout.
+    if value != committed_stage:
+        raise HTTPException(status_code=503, detail="Configured stage does not match repository release")
     return value
 
 
