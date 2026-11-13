@@ -5,31 +5,35 @@ services:
       context: .
       dockerfile: integrations/Dockerfile
     ports:
-      - "8090:8090"
+      - "127.0.0.1:8090:8090"
     environment:
       GATEWAY_API_KEY: ${GATEWAY_API_KEY:?Set GATEWAY_API_KEY in .env.business}
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY in .env.business}
       SALES_SERVICE_URL: http://sales:8000
       MARKETING_SERVICE_URL: http://marketing:8000
       FINANCE_SERVICE_URL: http://finance:8000
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-}
+      LSK_STAGE: production
+      LSK_ENABLE_DEMO_WRITES: ${LSK_ENABLE_DEMO_WRITES:-false}
     depends_on: [sales, marketing, finance]
   sales:
     build: ./external/lsk-sales-account
-    ports: ["8101:8000"]
+    ports: ["127.0.0.1:8101:8000"]
     environment:
       APP_DOMAIN: sales
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
     volumes: [sales_data:/srv/data]
   marketing:
     build: ./external/lsk-marketing
-    ports: ["8102:8000"]
+    ports: ["127.0.0.1:8102:8000"]
     environment:
       APP_DOMAIN: marketing
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
     volumes: [marketing_data:/srv/data]
   finance:
     build: ./external/lsk-finance
-    ports: ["8103:8000"]
+    ports: ["127.0.0.1:8103:8000"]
     environment:
       APP_DOMAIN: finance
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
