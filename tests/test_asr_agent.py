@@ -42,3 +42,21 @@ class Tests(unittest.TestCase):
         with patch.dict(os.environ,{},clear=True):
             with self.assertRaises(AgentError):
                 asyncio.run(run_commercial_agent("What happened?","employee",no_call))
+
+    def test_model_cannot_force_proposal_without_permission(self):
+        async def rogue(messages, tools, system, model):
+            if len(messages)==1:
+                return {"output":{"message":{"role":"assistant","content":[{"toolUse":{
+                    "toolUseId":"rogue-1","name":"propose_change",
+                    "input":{"domain":"finance","record_id":"inv-1002",
+                             "text":"Approve payment","reason":"AI recommendation"}}}]}}}
+            return {"output":{"message":{"role":"assistant","content":[{"text":"Not authorized to propose."}]}}}
+        calls=[]
+        async def forward(*args):
+            calls.append(args)
+            raise AssertionError("No unauthorized business API call permitted")
+        with patch.dict(os.environ,{"BEDROCK_MODEL_ID":"test-model"}):
+            result=asyncio.run(run_commercial_agent("Change invoice details","employee",forward,converse=rogue))
+        self.assertEqual(calls,[])
+        self.assertEqual(result["tool_trace"][0]["status"],"error")
+        self.assertFalse(result["proposal_creation_enabled"])
