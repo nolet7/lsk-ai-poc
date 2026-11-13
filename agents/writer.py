@@ -106,9 +106,7 @@ This platform demonstrates a production-style AI architecture combining agents, 
     # Store the report as the draft reviewed by the Reviewer Agent.
     state["draft_report"] = report
 
-    # Populate final_report so the Save Report Agent receives report content.
-    # The original code did not populate this field.
-    state["final_report"] = report
+    # Do not promote a draft; only the reviewer may approve final_report.
 
     # Return the updated state to the Reviewer Agent.
     return state
