@@ -17,8 +17,8 @@
 <body><main>
   <h1>LSK Commercial AI Assistant</h1>
   <p class="notice">Independent ASR Group-inspired portfolio simulation. Synthetic data only. No access to actual company records. Read-only AI demonstration: no automatic business writes or approvals.</p>
-  <label for="key">Gateway API key (held only in this browser tab's form)</label>
-  <input type="password" id="key" autocomplete="off" placeholder="Enter GATEWAY_API_KEY">
+  <label for="key">Gateway API key (POC) or OIDC bearer access token (pilot/production)</label>
+  <input type="password" id="key" autocomplete="off" placeholder="Enter POC key or signed OIDC access token">
   <label for="actor">Demo employee identity</label>
   <input id="actor" maxlength="80" value="demo.employee" autocomplete="off">
   <label for="question">Ask about synthetic sales, marketing or finance records</label>
@@ -27,7 +27,7 @@
   <p id="status" role="status" aria-live="polite"></p>
   <h2>AI response</h2><pre id="answer">No analysis requested yet.</pre>
   <h2>Evidence &amp; tool trace</h2><pre id="trace">No tool calls yet.</pre>
-  <p class="meta">LLM inference requires configured Amazon Bedrock model access. The original report demo remains separate. Demo actor headers are not enterprise authentication.</p>
+  <p class="meta">LLM inference requires configured Amazon Bedrock model access. The original report demo remains separate. Pilot/production requires verified OIDC bearer tokens. Demo actor headers are not enterprise authentication.</p>
 </main>
 <script>
   const ask=document.getElementById('ask');
@@ -43,7 +43,7 @@
     answer.textContent='';trace.textContent='';
     try{
       const response=await fetch('/v1/agent/run',{
-        method:'POST',headers:{'Content-Type':'application/json','X-API-Key':key,'X-Actor':actor},
+        method:'POST',headers:{'Content-Type':'application/json','X-API-Key':key,'Authorization':'Bearer '+key,'X-Actor':actor},
         body:JSON.stringify({question,allow_proposals:false})
       });
       const result=await response.json();
