@@ -44,6 +44,4 @@ async def propose_business_change(domain: str, record_id: str, text: str, reason
     """Create a proposal pending independent human review. This never approves it."""
     if not text.strip() or not reason.strip():
         raise ValueError("Proposal text and reason are required")
-    return await _request(f"/v1/apps/{_domain(domain)}/proposals", "POST",
-                          {"record_id": record_id, "text": text, "reason": reason},
-                          actor=actor, client=client)
+    raise RuntimeError("Unsafe legacy proposal tool disabled. Use the explicit idempotent /v1/platform/proposals API with a verified actor.")

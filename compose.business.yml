@@ -25,6 +25,8 @@ services:
     ports: ["127.0.0.1:8101:8000"]
     environment:
       APP_DOMAIN: sales
+      LSK_STAGE: poc
+      LSK_ENABLE_DEMO_WRITES: 'false'
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
     volumes: [sales_data:/srv/data]
   marketing:
@@ -32,6 +34,8 @@ services:
     ports: ["127.0.0.1:8102:8000"]
     environment:
       APP_DOMAIN: marketing
+      LSK_STAGE: poc
+      LSK_ENABLE_DEMO_WRITES: 'false'
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
     volumes: [marketing_data:/srv/data]
   finance:
@@ -39,6 +43,8 @@ services:
     ports: ["127.0.0.1:8103:8000"]
     environment:
       APP_DOMAIN: finance
+      LSK_STAGE: poc
+      LSK_ENABLE_DEMO_WRITES: 'false'
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
     volumes: [finance_data:/srv/data]
 volumes:

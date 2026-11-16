@@ -103,14 +103,18 @@ async def proposals(domain: str, actor: str = Depends(identity)):
 
 @app.post("/v1/apps/{domain}/proposals", status_code=201)
 async def propose(domain: str, payload: Proposal, actor: str = Depends(identity)):
-    require_demo_proposals()
-    return await forward(domain, "/v1/proposals", actor, "POST", payload.model_dump())
+    # Refuse this legacy route: it does not supply idempotency or immutable audit.
+    # Use POST /v1/platform/proposals with Idempotency-Key instead.
+    service_url(domain)
+    raise HTTPException(status_code=410, detail="Use /v1/platform/proposals with Idempotency-Key")
 
 @app.post("/v1/apps/{domain}/proposals/{proposal_id}/decision")
 async def decide(domain: str, proposal_id: str, payload: Decision,
                  x_role: str | None = Header(default=None),
                  actor: str = Depends(identity)):
-    require_demo_proposals()
+    # Reviewer headers are user-controlled; cannot authorize a consequential action.
+    service_url(domain)
+    raise HTTPException(status_code=403, detail="No verified reviewer workflow is installed")
     if x_role != "reviewer":
         raise HTTPException(status_code=403, detail="Reviewer role required (demo only)")
     return await forward(domain, "/v1/proposals/" + quote(proposal_id, safe="") + "/decision", actor,
