@@ -14,7 +14,7 @@ Three standalone [GitHub applications](docs/INTEGRATION.md) now connect through 
 | Marketing Intelligence | [lsk-marketing](https://github.com/nolet7/lsk-marketing) | http://localhost:8102/portal |
 | Finance Invoice Review | [lsk-finance](https://github.com/nolet7/lsk-finance) | http://localhost:8103/portal |
 
-From this repository root,  To reproduce exact versions run `bash scripts/clone_business_apps.sh` and `bash scripts/verify_business_versions.sh`, then copy `.env.business.example` to `.env.business`, set separate strong demo keys, and run `docker compose --env-file .env.business -f compose.business.yml up --build`. Visit http://localhost:8090 for the hub.
+From this repository root, reproduce the exact dependency versions by running `bash scripts/clone_business_apps.sh` and `bash scripts/verify_business_versions.sh`, then copy `.env.business.example` to `.env.business`, set separate strong demo keys, and run `docker compose --env-file .env.business -f compose.business.yml up --build`. Visit http://localhost:8090 for the hub.
 
 See [integration architecture and API contract](docs/INTEGRATION.md) and [async agent tool adapters](docs/AGENT_CONNECTORS.md).
 
