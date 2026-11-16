@@ -66,11 +66,19 @@ jobs:
             lsk-marketing
             lsk-finance
           permission-contents: read
+      - name: Read reviewed application versions
+        id: versions
+        shell: bash
+        run: |
+          source integrations/app-versions.env
+          echo "sales=$SALES_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "marketing=$MARKETING_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "finance=$FINANCE_COMMIT" >> "$GITHUB_OUTPUT"
       - name: Checkout pinned Sales application
         uses: actions/checkout@v4
         with:
           repository: nolet7/lsk-sales-account
-          ref: c7cfd3bd9c43b3651cd58396a40522fd0e9eeb81
+          ref: ${{ steps.versions.outputs.sales }}
           path: external/lsk-sales-account
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: false
@@ -78,7 +86,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: nolet7/lsk-marketing
-          ref: 161882119381132b33ac71cc6e73ab3004223ee2
+          ref: ${{ steps.versions.outputs.marketing }}
           path: external/lsk-marketing
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: false
@@ -86,7 +94,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: nolet7/lsk-finance
-          ref: 52def231ef2f0bbc107bb3813bca6ceac186ddcb
+          ref: ${{ steps.versions.outputs.finance }}
           path: external/lsk-finance
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: false
