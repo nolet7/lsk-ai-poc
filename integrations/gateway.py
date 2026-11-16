@@ -112,19 +112,13 @@ async def propose(domain: str, payload: Proposal, actor: str = Depends(identity)
 async def decide(domain: str, proposal_id: str, payload: Decision,
                  x_role: str | None = Header(default=None),
                  actor: str = Depends(identity)):
-    # Reviewer headers are user-controlled; cannot authorize a consequential action.
     service_url(domain)
     raise HTTPException(status_code=403, detail="No verified reviewer workflow is installed")
-    if x_role != "reviewer":
-        raise HTTPException(status_code=403, detail="Reviewer role required (demo only)")
-    return await forward(domain, "/v1/proposals/" + quote(proposal_id, safe="") + "/decision", actor,
-                         "POST", payload.model_dump(), reviewer=True)
 
 @app.get("/v1/apps/{domain}/audit")
 async def audit(domain: str, x_role: str | None = Header(default=None), actor: str = Depends(identity)):
-    if x_role != "reviewer":
-        raise HTTPException(status_code=403, detail="Reviewer role required (demo only)")
-    return await forward(domain, "/v1/audit", actor, reviewer=True)
+    service_url(domain)
+    raise HTTPException(status_code=403, detail="Audit-grade reviewer identity is not installed")
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def index():
