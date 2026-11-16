@@ -60,10 +60,10 @@ class CommercialArchitectureTests(unittest.TestCase):
             r=self.client.get("/v1/apps",headers=self.headers)
         self.assertEqual(r.status_code,503)
 
-    def test_demo_mutations_are_disabled_by_default(self):
+    def test_legacy_mutation_route_is_retired(self):
         r=self.client.post("/v1/apps/finance/proposals",headers=self.headers,json={
             "record_id":"inv-1002","text":"Request review","reason":"Synthetic mismatch"})
-        self.assertEqual(r.status_code,403)
+        self.assertEqual(r.status_code,410)
 
     def test_same_idempotency_key_replays_without_duplicate_write(self):
         with tempfile.TemporaryDirectory() as temp,patch.dict(os.environ,{
