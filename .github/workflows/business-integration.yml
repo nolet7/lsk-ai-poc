@@ -39,19 +39,60 @@ jobs:
         run: docker compose -f compose.business.yml config --quiet
 
   four-service-smoke:
+    # These business repositories may be private. Never assume that the
+    # central repo's GITHUB_TOKEN can read other repositories.
+    # Set repository variable LSK_INTEGRATION_ENABLED=true only after setting
+    # the LSK_INTEGRATION_APP_ID and LSK_INTEGRATION_APP_PRIVATE_KEY secrets.
+    if: ${{ vars.LSK_INTEGRATION_ENABLED == 'true' }}
     needs: contract-and-security
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Generate short-lived cross-repository read token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.LSK_INTEGRATION_APP_ID }}
+          private-key: ${{ secrets.LSK_INTEGRATION_APP_PRIVATE_KEY }}
+          owner: nolet7
+          repositories: |
+            lsk-sales-account
+            lsk-marketing
+            lsk-finance
+          permission-contents: read
+      - name: Checkout pinned Sales application
+        uses: actions/checkout@v4
+        with:
+          repository: nolet7/lsk-sales-account
+          ref: c7cfd3bd9c43b3651cd58396a40522fd0e9eeb81
+          path: external/lsk-sales-account
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+      - name: Checkout pinned Marketing application
+        uses: actions/checkout@v4
+        with:
+          repository: nolet7/lsk-marketing
+          ref: 161882119381132b33ac71cc6e73ab3004223ee2
+          path: external/lsk-marketing
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+      - name: Checkout pinned Finance application
+        uses: actions/checkout@v4
+        with:
+          repository: nolet7/lsk-finance
+          ref: 52def231ef2f0bbc107bb3813bca6ceac186ddcb
+          path: external/lsk-finance
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+      - name: Verify pinned application revisions
+        run: bash scripts/verify_business_versions.sh
       - name: Install synthetic business and gateway dependencies
         run: python -m pip install "fastapi>=0.115,<1" "uvicorn>=0.30,<1" "httpx>=0.27,<1" "boto3>=1.35,<2" "PyJWT[crypto]>=2.9,<3"
-      - name: Clone exact approved business app versions
-        run: |
-          bash scripts/clone_business_apps.sh
-          bash scripts/verify_business_versions.sh
-      - name: Full synthetic HTTP integration, without model charges
+      - name: Four-process HTTP integration without Bedrock charges
         run: python scripts/smoke_business.py
