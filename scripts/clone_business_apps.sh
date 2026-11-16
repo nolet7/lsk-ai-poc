@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
-mkdir -p external
-for name in lsk-sales-account lsk-marketing lsk-finance; do
-  if [ -d "external/$name/.git" ]; then
-    echo "Found existing clone: external/$name (not overwriting local changes)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck disable=SC1091
+source "$ROOT/integrations/app-versions.env"
+mkdir -p "$ROOT/external"
+for entry in "lsk-sales-account:$SALES_COMMIT" "lsk-marketing:$MARKETING_COMMIT" "lsk-finance:$FINANCE_COMMIT"; do
+  name="${entry%%:*}"
+  commit="${entry#*:}"
+  target="$ROOT/external/$name"
+  if [[ -d "$target/.git" ]]; then
+    echo "Preserving existing $name checkout; run scripts/verify_business_versions.sh to check exact revision."
   else
-    git clone "https://github.com/nolet7/$name.git" "external/$name"
+    git clone "https://github.com/nolet7/$name.git" "$target"
+    git -C "$target" checkout --detach "$commit"
+    echo "Cloned $name at pinned $commit"
   fi
 done
-echo "Next: copy .env.business.example to .env.business, set keys, then run docker compose --env-file .env.business -f compose.business.yml up --build"
+echo "Configure .env.business and run Compose when all revisions verify."
