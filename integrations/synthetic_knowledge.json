@@ -1,0 +1,47 @@
+[
+  {
+    "id": "lsk-account-standards-v1",
+    "title": "Account follow-up standards",
+    "tenant_id": "lsk-synthetic",
+    "allowed_subjects": [
+      "employee",
+      "demo.employee",
+      "evaluation.readonly"
+    ],
+    "allowed_domains": [
+      "sales"
+    ],
+    "classification": "synthetic",
+    "text": "LSK account managers review distributor renewal dates, confirm quoted commercial terms with a human owner, and document follow-up tasks. The assistant does not approve pricing."
+  },
+  {
+    "id": "lsk-campaign-standards-v1",
+    "title": "Brand campaign interpretation",
+    "tenant_id": "lsk-synthetic",
+    "allowed_subjects": [
+      "employee",
+      "demo.employee",
+      "evaluation.readonly"
+    ],
+    "allowed_domains": [
+      "marketing"
+    ],
+    "classification": "synthetic",
+    "text": "LSK campaign analysis uses source-system impressions, clicks, conversions and spend; campaign KPIs are computed by the Marketing service. AI narrative is advisory."
+  },
+  {
+    "id": "lsk-invoice-standards-v1",
+    "title": "Commercial invoice exception review",
+    "tenant_id": "lsk-synthetic",
+    "allowed_subjects": [
+      "employee",
+      "demo.employee",
+      "evaluation.readonly"
+    ],
+    "allowed_domains": [
+      "finance"
+    ],
+    "classification": "synthetic",
+    "text": "LSK invoice variance requires validation against purchase orders and receipts; a finance reviewer resolves exceptions. AI may summarize but cannot issue payments or authorize ledger changes."
+  }
+]

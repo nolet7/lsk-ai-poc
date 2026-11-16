@@ -10,6 +10,7 @@ import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
+from integrations.enterprise_policy import require_demo_proposals
 
 DOMAINS = {
     "sales": os.getenv("SALES_SERVICE_URL", "http://localhost:8101").rstrip("/"),
@@ -100,12 +101,14 @@ async def proposals(domain: str, actor: str = Depends(identity)):
 
 @app.post("/v1/apps/{domain}/proposals", status_code=201)
 async def propose(domain: str, payload: Proposal, actor: str = Depends(identity)):
+    require_demo_proposals()
     return await forward(domain, "/v1/proposals", actor, "POST", payload.model_dump())
 
 @app.post("/v1/apps/{domain}/proposals/{proposal_id}/decision")
 async def decide(domain: str, proposal_id: str, payload: Decision,
                  x_role: str | None = Header(default=None),
                  actor: str = Depends(identity)):
+    require_demo_proposals()
     if x_role != "reviewer":
         raise HTTPException(status_code=403, detail="Reviewer role required (demo only)")
     return await forward(domain, "/v1/proposals/" + quote(proposal_id, safe="") + "/decision", actor,
@@ -127,3 +130,7 @@ a{color:#1764a5}article{background:white;border-radius:10px;padding:20px;margin:
 <article><h2>Marketing Intelligence</h2><a href="http://localhost:8102/portal">Open Marketing Portal</a></article>
 <article><h2>Finance Exception Review</h2><a href="http://localhost:8103/portal">Open Finance Portal</a></article>
 <p>Developer API: <a href="/docs">Gateway Swagger docs</a>. Synthetic demo only, not enterprise SSO.</p></body></html>"""
+
+# Central API boundary; real ERP mutations remain outside this POC.
+from integrations.enterprise_api import install as install_enterprise_api
+install_enterprise_api(app, identity, forward)
