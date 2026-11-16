@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: lsk-ai-gateway
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lsk-ai-gateway
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  selector:
+    matchLabels: {app: lsk-ai-gateway}
+  template:
+    metadata:
+      labels: {app: lsk-ai-gateway}
+    spec:
+      serviceAccountName: lsk-ai-gateway
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: gateway
+          image: ghcr.io/nolet7/lsk-ai-poc-gateway@sha256:REPLACE_WITH_SIGNED_IMAGE_DIGEST
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8090}]
+          env:
+            - {name: LSK_STAGE, value: poc}
+            - {name: LSK_TENANT_ID, value: lsk-synthetic}
+            - {name: LSK_ENABLE_DEMO_WRITES, value: "false"}
+            - {name: SALES_SERVICE_URL, value: "http://lsk-sales:8000"}
+            - {name: MARKETING_SERVICE_URL, value: "http://lsk-marketing:8000"}
+            - {name: FINANCE_SERVICE_URL, value: "http://lsk-finance:8000"}
+            - {name: AWS_REGION, value: "us-east-1"}
+            - name: GATEWAY_API_KEY
+              valueFrom: {secretKeyRef: {name: lsk-gateway-credentials, key: GATEWAY_API_KEY}}
+            - name: DEMO_API_KEY
+              valueFrom: {secretKeyRef: {name: lsk-gateway-credentials, key: DEMO_API_KEY}}
+          readinessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: 500m, memory: 512Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: ["ALL"]}
+            readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lsk-ai-gateway
+spec:
+  type: ClusterIP
+  selector: {app: lsk-ai-gateway}
+  ports:
+    - {port: 8090, targetPort: http, protocol: TCP, name: http}

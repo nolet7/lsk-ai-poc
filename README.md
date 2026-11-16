@@ -1,4 +1,8 @@
-# Production AI Platform — Fully Commented Code
+# LSK Enterprise AI Enablement — Commercial AI POC
+
+**Architecture v2 update:** Enterprise API boundaries, ACL-first synthetic retrieval, optional real Bedrock Converse inference, and idempotent pending proposals are now on `main`. [Architecture decisions](docs/ARCHITECTURE_V2.md) · [Release gates](docs/RELEASE_GATES.md) · [Kubernetes reference](deploy/k8s/README.md).
+
+Use `POST /v1/platform/ask` for approved read-only business evidence or model-grounded explanations. Set `use_model=false` for deterministic retrieval-only results; real inference requires `BEDROCK_MODEL_ID` and AWS permissions. `POST /v1/platform/proposals` requires explicit POC opt-in and an `Idempotency-Key`; it creates a pending synthetic proposal **without any ERP write or approval**. Legacy proposal writes/reviewer headers are disabled. All non-POC stages fail closed until enterprise identity is implemented.
 
 ## Integrated business applications (Sales · Marketing · Finance)
 
@@ -14,7 +18,7 @@ From this repository root, run `bash scripts/clone_business_apps.sh`, copy `.env
 
 See [integration architecture and API contract](docs/INTEGRATION.md) and [async agent tool adapters](docs/AGENT_CONNECTORS.md).
 
-**Portfolio POC only:** Synthetic records, demo shared API keys, spoofable reviewer-role headers and local storage. These integrations have not completed production security, identity, deployment, or business-adoption gates.
+**Portfolio POC only:** Synthetic records, demo shared POC API keys and local storage; spoofable reviewer routes are blocked. These integrations have not completed production security, identity, deployment, or business-adoption gates.
 
 ---
 

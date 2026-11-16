@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: lsk-ai-gateway-restrict
+spec:
+  podSelector:
+    matchLabels: {app: lsk-ai-gateway}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector: {matchLabels: {app: lsk-internal-client}}
+      ports: [{protocol: TCP, port: 8090}]
+  egress:
+    - to:
+        - podSelector: {matchLabels: {app: lsk-sales}}
+        - podSelector: {matchLabels: {app: lsk-marketing}}
+        - podSelector: {matchLabels: {app: lsk-finance}}
+      ports: [{protocol: TCP, port: 8000}]
+    - to:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+# Bedrock model access through an approved private VPC endpoint needs a
+# platform-specific egress policy. This deny-by-default sample intentionally
+# has no external Bedrock egress until that policy is reviewed.
