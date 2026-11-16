@@ -12,9 +12,10 @@ import sqlite3
 import time
 import uuid
 from pathlib import Path
+from contextlib import closing
 
 def connect():
-    path = Path(os.getenv("LSK_COMMAND_DB", "/tmp/lsk-demo-command.sqlite3"))
+    path = Path(os.getenv("LSK_COMMAND_DB", "data/demo_commands.sqlite3"))
     path.parent.mkdir(parents=True, exist_ok=True)
     con=sqlite3.connect(str(path), timeout=8)
     con.row_factory=sqlite3.Row
@@ -34,7 +35,7 @@ def submit(*, tenant: str, actor: str, domain: str, record_id: str,
     content=json.dumps({"domain":domain,"record_id":record_id,"text":text,"reason":reason},
                        sort_keys=True,separators=(",",":"))
     digest=hashlib.sha256(content.encode()).hexdigest()
-    with connect() as con:
+    with closing(connect()) as con, con:
         con.execute("BEGIN IMMEDIATE")
         existing=con.execute("SELECT * FROM proposals WHERE tenant=? AND actor=? AND idempotency_key=?",
                              (tenant,actor,idempotency_key)).fetchone()

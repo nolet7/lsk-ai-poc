@@ -30,7 +30,7 @@ def scope_for(actor: str, domain: str | None = None) -> Scope:
         raise HTTPException(503, "Invalid server tenant")
     if domain is not None and domain not in DOMAINS:
         raise HTTPException(404, "Unknown business domain")
-    return Scope(tenant, actor, DOMAINS, stage)
+    return Scope(tenant, actor, frozenset({domain}) if domain else DOMAINS, stage)
 
 def require_demo_proposals() -> None:
     if os.getenv("LSK_STAGE", "poc").lower() != "poc" or os.getenv("LSK_ENABLE_DEMO_WRITES", "").lower() != "true":

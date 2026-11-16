@@ -15,8 +15,10 @@ services:
       LSK_STAGE: poc
       LSK_TENANT_ID: lsk-synthetic
       LSK_ENABLE_DEMO_WRITES: ${LSK_ENABLE_DEMO_WRITES:-false}
+      LSK_COMMAND_DB: /srv/state/commands.sqlite3
       BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-}
       AWS_REGION: ${AWS_REGION:-us-east-1}
+    volumes: [gateway_state:/srv/state]
     depends_on: [sales, marketing, finance]
   sales:
     build: ./external/lsk-sales-account
@@ -40,6 +42,7 @@ services:
       DEMO_API_KEY: ${DEMO_API_KEY:?Set DEMO_API_KEY}
     volumes: [finance_data:/srv/data]
 volumes:
+  gateway_state:
   sales_data:
   marketing_data:
   finance_data:

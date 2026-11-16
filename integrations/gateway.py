@@ -21,6 +21,8 @@ app = FastAPI(title="LSK Enterprise AI Enablement Gateway", version="1.0.0")
 
 def identity(x_api_key: str | None = Header(default=None),
              x_actor: str | None = Header(default=None)):
+    if os.getenv("LSK_STAGE", "poc").lower() != "poc":
+        raise HTTPException(status_code=503, detail="Production identity provider is not implemented on this gateway")
     key = os.getenv("GATEWAY_API_KEY")
     if not key:
         raise HTTPException(status_code=503, detail="GATEWAY_API_KEY not configured")
