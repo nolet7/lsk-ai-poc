@@ -43,3 +43,17 @@ docker compose --env-file .env.business -f compose.business.yml config
 ```
 
 Real Bedrock acceptance separately requires approved model access, a scoped EC2/EKS workload role, verified latency and token cost. AWS credits do not imply access or free inference.
+
+
+## Cross-repository integration CI authentication
+
+The Sales, Marketing, and Finance applications are separate GitHub repositories, which may be private. The default `GITHUB_TOKEN` for `lsk-ai-poc` does not automatically grant access to them. The `four-service-smoke` workflow is **skipped until authorized**, not counted as evidence of a passing integration test.
+
+Configure an authorized GitHub App with read-only Contents access to the three business repositories; store its App ID and private key in this repository's GitHub Actions secrets:
+
+- `LSK_INTEGRATION_APP_ID`
+- `LSK_INTEGRATION_APP_PRIVATE_KEY`
+
+Then create the repository variable `LSK_INTEGRATION_ENABLED=true`. The job uses a short-lived GitHub App token, checks out pinned SHAs from `integrations/app-versions.env`, verifies them, and runs `scripts/smoke_business.py` against four actual FastAPI processes with temporary synthetic databases. No Bedrock costs are incurred.
+
+A green run with the smoke job **skipped** is only unit/API contract validation. A completed smoke job is needed for the integration acceptance gate. Do not grant private keys or broader repository permissions merely to make a test green.
