@@ -1,6 +1,6 @@
 # LSK AWS Enterprise Platform — Terraform hands-on learning track
 
-**Branch:** `feature/aws-ec2-poc-deploy` (historical branch name; this directory supersedes EC2 Compose as the enterprise target). Existing `deploy/aws/ec2/` remains an isolated reference lab, **not the enterprise deployment**.
+**Branch:** `feature/aws-enterprise-terraform` (the enterprise Terraform branch; the earlier EC2 Compose lab is retained for comparison). Existing `deploy/aws/ec2/` remains an isolated reference lab, **not the enterprise deployment**.
 
 ## How the exercise works
 Do **exactly one task at a time**. Complete the task, paste the evidence requested (redact AWS account IDs, resource ARNs, tokens, public IPs and secrets), then request an acceptance review. The next task remains gated until the previous one passes. The assistant cannot directly observe your personal AWS account unless you provide non-sensitive command output or connect an authorized tool. Do not paste credentials, Terraform state, or `.tfvars` containing secrets.
