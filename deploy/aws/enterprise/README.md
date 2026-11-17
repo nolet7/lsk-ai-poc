@@ -17,6 +17,10 @@ Do **exactly one task at a time**. Complete the task, paste the evidence request
 
 These subtracks have dependencies rather than a strict mandatory execution order: MCP and RAG contracts should be validated before the commercial agent graph; the model gateway can be implemented with stub inputs independently. Do not connect them to actual users until OIDC authorization tests pass. **Task 01 remains first and unchanged.**
 
+## System design audit
+
+[**Kubernetes operations gap analysis and decisions**](kubernetes/OPERATIONS_GAPS.md) tracks concrete chart corrections, external dependencies, security boundaries and blockers to multi-replica availability. [The render-only safety test](kubernetes/tests/check-gateway-chart.sh) exercises valid/invalid Helm configuration; it still must be executed in a developer environment with Helm installed. The sample chart is explicitly limited to one POC replica, not an enterprise HA release.
+
 ## Dedicated Kubernetes operations folder
 
 [**Kubernetes operations implementation track**](kubernetes/README.md) defines the EKS platform, AWS Load Balancer Controller, managed node groups / conditional Karpenter, Helm application starter chart, Argo CD manual-sync starter, day-2 operations, security boundaries and acceptance tests.
