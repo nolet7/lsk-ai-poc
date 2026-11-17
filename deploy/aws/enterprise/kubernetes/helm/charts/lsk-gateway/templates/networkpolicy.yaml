@@ -1,0 +1,21 @@
+# Restricts gateway ingress to in-namespace application clients by default.
+# Set explicit namespace/pod authorization in pilot with validated network policy support.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-gateway-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: lsk-gateway
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              lsk.ai/gateway-client: "true"
+      ports:
+        - protocol: TCP
+          port: 8090
