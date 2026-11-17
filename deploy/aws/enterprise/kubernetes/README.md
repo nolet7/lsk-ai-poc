@@ -10,6 +10,14 @@
 | Application image build, test, SBOM, sign, ECR publish | GitHub Actions | Pinned source versions, integration test credentials |
 | Workload pod scheduling/autoscaling | EKS managed node groups initially; Karpenter later after measured need | EKS capacity strategy, taints/limits, interruption policy |
 
+## System design review and executable tests
+
+- [Operational design findings and ADRs](OPERATIONS_GAPS.md) — specific defects, fixes, and unclosed production risks.
+- [Chart negative/render test](tests/check-gateway-chart.sh) — requires Helm v3, Bash and Python 3; run `bash deploy/aws/enterprise/kubernetes/tests/check-gateway-chart.sh` before any cluster apply.
+- The sample gateway is deliberately **single replica** due to local SQLite proposal state, and demo writes are disabled. It cannot meet HA SLOs until migrated to a managed durable command store.
+- The ingress NetworkPolicy only permits in-namespace pods labeled `lsk.ai/gateway-client=true`. Namespace label governance and actual CNI enforcement must be verified; a compromised pod or unchecked label can undermine this policy.
+- A pre-existing Kubernetes Secret is mandatory; Secret rotation requires an explicit application rollout/reload.
+
 ## Platform stack
 - EKS across 3 AZs with private managed node groups, EKS Pod Identity Agent, VPC CNI networking policy support verified, CoreDNS, kube-proxy if required by selected EKS version.
 - AWS Load Balancer Controller, External Secrets Operator (with Pod Identity), metrics-server, cert management according to selected TLS design, OpenTelemetry Collector, Prometheus/Grafana.
