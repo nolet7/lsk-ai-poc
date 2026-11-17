@@ -2,6 +2,8 @@
 
 > **Detailed agentic runtime reference:** [AGENTIC_AI_ARCHITECTURE.md](AGENTIC_AI_ARCHITECTURE.md). This includes the required MCP servers and gateway, LangGraph supervisor/specialist agents, ACL-enforced RAG and document ingestion, Bedrock model gateway, evaluators, memory/checkpoints and approval services. The simplified infrastructure diagram below is NOT the full AI design.
 
+**Kubernetes operations detail:** [EKS, Helm, Argo CD and autoscaling design](kubernetes/README.md); [Task 04A](tasks/04a-kubernetes-operations.md) and [Task 06A](tasks/06a-helm-argocd.md).
+
 **Target design / not yet deployed.** Implement incrementally; the current repository remains a synthetic POC. Do not claim production readiness until proven by application and platform gates.
 
 ```mermaid
