@@ -17,6 +17,15 @@ Do **exactly one task at a time**. Complete the task, paste the evidence request
 
 These subtracks have dependencies rather than a strict mandatory execution order: MCP and RAG contracts should be validated before the commercial agent graph; the model gateway can be implemented with stub inputs independently. Do not connect them to actual users until OIDC authorization tests pass. **Task 01 remains first and unchanged.**
 
+## Dedicated Kubernetes operations folder
+
+[**Kubernetes operations implementation track**](kubernetes/README.md) defines the EKS platform, AWS Load Balancer Controller, managed node groups / conditional Karpenter, Helm application starter chart, Argo CD manual-sync starter, day-2 operations, security boundaries and acceptance tests.
+
+- [Task 04A — EKS operations and autoscaling](tasks/04a-kubernetes-operations.md)
+- [Task 06A — Helm, Argo CD and GitOps](tasks/06a-helm-argocd.md)
+
+**Design status:** The chart and Argo Application are templates, not executed releases. Cluster Terraform modules, per-service production charts and Karpenter installation are task deliverables, not yet implemented. **Task 01 remains the first step.**
+
 ## Architecture decisions
 - **Target:** Separate nonproduction and production AWS accounts, three AZs, private EKS nodes and service pods, dedicated IAM roles with EKS Pod Identity, private Aurora PostgreSQL with encrypted storage, S3 documents, Bedrock read-only inference, queue-backed approved proposals, OIDC workforce identity, ALB/WAF/TLS, CloudWatch + OTel + Prometheus/Grafana, GitHub Actions build and Argo CD GitOps deploy.
 - **IaC:** Terraform modules for network, cluster, identities, secrets, data and observability; one state per account/environment/component. Terraform resources and Kubernetes/Helm workloads have explicit ownership boundaries. Avoid a single enormous root state.
@@ -38,8 +47,10 @@ deploy/aws/enterprise/
     02-terraform-remote-state.md
     03-network-foundation.md           (implementation gated)
     04-eks-platform.md                 (implementation gated)
+    04a-kubernetes-operations.md       (implementation gated)
     05-identity-and-secrets.md         (implementation gated)
     06-build-ecr-ci.md                 (implementation gated)
+    06a-helm-argocd.md                 (implementation gated)
     07-business-services.md            (implementation gated)
     08-data-and-messaging.md           (implementation gated)
     09-ai-rag-bedrock.md               (parent integration gate)
@@ -54,7 +65,7 @@ deploy/aws/enterprise/
     bootstrap/        <-- one-time protected state S3 bucket (task 02)
     environments/     <-- created and reviewed in task 03+
     modules/          <-- created and reviewed in task 03+
-  kubernetes/         <-- task 04+
+  kubernetes/         <-- EKS ops specs + Helm chart + GitOps starter, task 04+
   gitops/             <-- task 06+
 ```
 
