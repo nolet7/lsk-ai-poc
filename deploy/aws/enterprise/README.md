@@ -5,6 +5,18 @@
 ## How the exercise works
 Do **exactly one task at a time**. Complete the task, paste the evidence requested (redact AWS account IDs, resource ARNs, tokens, public IPs and secrets), then request an acceptance review. The next task remains gated until the previous one passes. The assistant cannot directly observe your personal AWS account unless you provide non-sensitive command output or connect an authorized tool. Do not paste credentials, Terraform state, or `.tfvars` containing secrets.
 
+## AI platform design (review update)
+
+**Full runtime:** [AGENTIC_AI_ARCHITECTURE.md](AGENTIC_AI_ARCHITECTURE.md) describes the MCP tool services, AgentCore Gateway vs private MCP decision, LangGraph supervisor and specialist agents, Aurora checkpoints, ACL-first RAG, S3 ingestion, embeddings and hybrid retrieval, Bedrock model router, prompt registry, Bedrock Guardrails, AI evaluations and telemetry. These are **design targets**, not completed deployments.
+
+**Task 09 is split into four separate gated labs** so model access does not obscure authorization and tool-execution safety:
+- [09A MCP and delegated identity](tasks/09a-mcp-platform.md)
+- [09B agentic LangGraph and memory](tasks/09b-agentic-orchestration.md)
+- [09C RAG and document intelligence](tasks/09c-rag-document-intelligence.md)
+- [09D LLM gateway, prompts and evaluation](tasks/09d-llm-model-governance.md)
+
+These subtracks have dependencies rather than a strict mandatory execution order: MCP and RAG contracts should be validated before the commercial agent graph; the model gateway can be implemented with stub inputs independently. Do not connect them to actual users until OIDC authorization tests pass. **Task 01 remains first and unchanged.**
+
 ## Architecture decisions
 - **Target:** Separate nonproduction and production AWS accounts, three AZs, private EKS nodes and service pods, dedicated IAM roles with EKS Pod Identity, private Aurora PostgreSQL with encrypted storage, S3 documents, Bedrock read-only inference, queue-backed approved proposals, OIDC workforce identity, ALB/WAF/TLS, CloudWatch + OTel + Prometheus/Grafana, GitHub Actions build and Argo CD GitOps deploy.
 - **IaC:** Terraform modules for network, cluster, identities, secrets, data and observability; one state per account/environment/component. Terraform resources and Kubernetes/Helm workloads have explicit ownership boundaries. Avoid a single enormous root state.
@@ -30,7 +42,11 @@ deploy/aws/enterprise/
     06-build-ecr-ci.md                 (implementation gated)
     07-business-services.md            (implementation gated)
     08-data-and-messaging.md           (implementation gated)
-    09-ai-rag-bedrock.md               (implementation gated)
+    09-ai-rag-bedrock.md               (parent integration gate)
+    09a-mcp-platform.md                (implementation gated)
+    09b-agentic-orchestration.md        (implementation gated)
+    09c-rag-document-intelligence.md    (implementation gated)
+    09d-llm-model-governance.md         (implementation gated)
     10-edge-identity.md                (implementation gated)
     11-observability-reliability.md    (implementation gated)
     12-security-dr-and-promotion.md    (implementation gated)
@@ -53,7 +69,11 @@ deploy/aws/enterprise/
 | 06 | ECR, CI pinned builds, scan/sign/push and Argo CD promotion | immutable digest, CI logs, GitOps sync/rollback evidence |
 | 07 | Gateway + three apps as independently deployed services | service endpoints, health probes, four-service smoke, no public app ports |
 | 08 | Aurora, per-app schemas/users, SQS/DLQ, migrations and backups | tests showing durability, idempotency, DB isolation and restore |
-| 09 | Bedrock read-only, ACL-aware retrieval, S3 index, evaluations | evidence citations, model usage, injection-denial and cost data |
+| 09A | MCP tool servers, gateway, delegated identity | scoped discovery, denied cross-tenant calls and audit trace |
+| 09B | Commercial LangGraph agents and checkpoints | runs survive restart, tool constraints and approvals |
+| 09C | RAG pipeline, ACL-aware vector search, ingestion | index provenance, citations, tenant/revoke/delete tests |
+| 09D | LLM model routing, prompts, guardrails, evaluations | model quality gates, cost/latency, fail closed |
+| 09 | Integrate all four AI components | end-to-end authenticated agent task and adversarial evaluation |
 | 10 | Authenticated public entry (or private workforce access), TLS/WAF, OIDC | denied unauthenticated access, verified claims and record-level auth |
 | 11 | SLOs, traces, alerts, scaling, chaos/failure drills | dashboards, alert fire, rollback and load results |
 | 12 | threat model, supply chain, DR, UAT, production approval | signed gate checklist and rollback/restore results |
