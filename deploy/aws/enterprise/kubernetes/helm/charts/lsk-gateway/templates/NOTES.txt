@@ -1,0 +1,7 @@
+POC ONLY — internal ClusterIP service and synthetic records. No pilot or production identity.
+Before deploying:
+- Provision Secret {{ .Values.existingSecretName }} from a managed secret store.
+- Deploy approved Sales, Marketing, Finance services and validate network paths.
+- Run `kubectl -n {{ .Release.Namespace }} get deployments,svc,networkpolicy`.
+- Confirm network policy enforcement in the actual CNI; merely creating it is not proof.
+- Do not expose this gateway publicly or use real customer data.
