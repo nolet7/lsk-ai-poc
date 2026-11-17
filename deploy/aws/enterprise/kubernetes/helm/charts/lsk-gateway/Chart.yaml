@@ -1,0 +1,6 @@
+apiVersion: v2
+name: lsk-gateway
+description: Internal synthetic POC gateway chart; enterprise authentication not implemented
+type: application
+version: 0.1.0
+appVersion: "poc"
