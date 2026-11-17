@@ -11,7 +11,7 @@ An AWS account or approved training subaccount with AWS CLI v2 access via IAM Id
 ## Actions
 1. Clone/open the branch:
 ```powershell
-git clone --branch feature/aws-ec2-poc-deploy https://github.com/nolet7/lsk-ai-poc.git
+git clone --branch feature/aws-enterprise-terraform https://github.com/nolet7/lsk-ai-poc.git
 cd lsk-ai-poc
 git branch --show-current
 ```
