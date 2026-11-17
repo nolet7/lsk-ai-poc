@@ -1,27 +1,34 @@
-# TASK 09 — ai rag bedrock
+# TASK 09 — Integrated enterprise agentic AI acceptance gate
 
-**Status: LOCKED** until the preceding task passes. This is an implementation requirement specification, **not** a completed Terraform module or a permission to provision resources. You and the reviewer will write and validate the code during this task.
+**Status: LOCKED** pending earlier infrastructure/application/identity requirements. This is the integration gate, not an implementation of AI services.
 
-## Goal
-Use approved Bedrock model via scoped Pod Identity, ACL-aware document ingestion from versioned S3, pgvector or OpenSearch, citations, model/prompt version pinning, no data leakage, retrieval and prompt injection evaluations.
+The following task specifications MUST be completed, independently validated and integrated:
 
-## Requirements
-1. Review the [target architecture](../ARCHITECTURE.md), the [roadmap](../README.md), current code and earlier acceptance reports. Identify dependencies and missing application features before changes.
-2. Produce a concrete implementation plan including resource diagrams, Terraform module boundaries, versioned inputs/outputs, IAM trust and permissions, network paths, dependencies, costs, rollback and test plan. Do not copy production account IDs or secrets into code.
-3. Implement on a reviewed task-specific feature branch derived from `feature/aws-enterprise-terraform`; keep nonprod/production state and configuration separate. Use remote state with S3 native lockfiles. Pin Terraform provider and module/chart versions, review versions against official support policy.
-4. Run `terraform fmt -check -recursive`, `terraform init`, `terraform validate`, static security/policy scans and `terraform plan`; obtain approval before any apply. Inspect for drift/destruction and costly resources.
-5. Deploy only to an approved nonproduction AWS account and validate using positive and negative security tests, failure handling and observability. Write a runbook and an explicit cleanup or retention decision.
-6. Submit evidence with secret/account metadata redacted. Do not proceed until reviewer verifies the acceptance criteria.
+1. [09A Enterprise MCP and delegated identity](09a-mcp-platform.md)
+2. [09B Commercial LangGraph agentic runtime and durable memory](09b-agentic-orchestration.md)
+3. [09C Enterprise RAG / document pipeline](09c-rag-document-intelligence.md)
+4. [09D LLM model gateway, governance and evaluations](09d-llm-model-governance.md)
 
-## Acceptance evidence
-Show authorized/unauthorized retrieval tests, evidence citations, actual model inference & token use, timeout, groundedness and cost thresholds.
+## End-to-end release demonstration
 
-## Gate
-- [ ] Architecture and ADR review complete
-- [ ] Terraform lint/validate/plan pass
-- [ ] Least privilege, encryption and network boundaries checked
-- [ ] Apply approved in correct environment
-- [ ] End-to-end and negative test evidence reviewed
-- [ ] Cost/rollback/runbook documented
+- Verified Finance employee asks about a synthetic invoice exception.
+- Agent supervisor chooses Finance and document tools through authenticated MCP with user scopes.
+- Finance API provides authoritative numbers; document MCP retrieves versioned ACL-scoped source chunks.
+- Governed Bedrock model explains only supplied evidence with citations, labels model version and trace id.
+- Agent proposes a human review; idempotency stores one pending proposal; no LLM-initiated ERP mutation.
+- Separate verified reviewer acts through an approval workflow; model can't impersonate reviewers.
+- A different tenant, an expired identity, injected document instruction and unavailable model are all denied/degraded correctly.
+- Restart agent pods in the middle of a checkpointed run; recover without unauthorized tool calls or repeated commands.
+- Trace spans show agent plan, MCP decisions, RAG queries, model usage, approvals and failed controls with no secret logging.
+- Run golden evaluation regressions and load/budget tests before promoting.
 
-**Do not start this task until approved.**
+## Acceptance
+- [ ] All 09A–09D independent evaluations pass
+- [ ] Business record ACL and document ACL verified at final underlying API / index
+- [ ] Tool outputs and prompt injections cannot grant privilege or business mutations
+- [ ] Durable replay protection and checkpoint revocation verification
+- [ ] AI model/RAG quality, latency and token budgets measured
+- [ ] Release artifacts pinned, signed, scanned and rollback rehearsed
+- [ ] Product owner, security and platform owner approve pilot or production gate
+
+**Stop for review. The existing POC is not the target runtime.**
