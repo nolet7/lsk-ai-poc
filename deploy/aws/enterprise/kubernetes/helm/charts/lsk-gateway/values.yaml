@@ -1,0 +1,32 @@
+# Safe-by-default: chart does not expose public LoadBalancer/Ingress.
+replicaCount: 1
+image:
+  repository: "" # Required: private ECR repository
+  digest: ""     # Required: verified immutable sha256:<64 hex> digest
+  pullPolicy: IfNotPresent
+service:
+  port: 8090
+  type: ClusterIP
+env:
+  stage: poc
+  tenantId: lsk-synthetic
+  awsRegion: us-east-1
+  bedrockModelId: "" # Disabled by default
+  salesUrl: http://lsk-sales:8000
+  marketingUrl: http://lsk-marketing:8000
+  financeUrl: http://lsk-finance:8000
+  enableDemoWrites: "false"
+# Pre-create a Kubernetes Secret using an approved secret-sync controller;
+# it must contain GATEWAY_API_KEY and DEMO_API_KEY.
+existingSecretName: ""
+serviceAccount:
+  name: lsk-gateway
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+# This gateway uses local SQLite for proposals. Writes are disabled here.
+# Stateless read-only demonstration only; production replacement requires managed state.
