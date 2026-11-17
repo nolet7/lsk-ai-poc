@@ -1,15 +1,4 @@
-{{- if not .Values.image.repository -}}
-{{- fail "image.repository must be set to an approved private ECR repository" -}}
-{{- end -}}
-{{- if not regexMatch "^sha256:[0-9a-f]{64}$" .Values.image.digest -}}
-{{- fail "image.digest must be an immutable sha256 digest" -}}
-{{- end -}}
-{{- if ne .Values.env.stage "poc" -}}
-{{- fail "pilot/production deployment blocked: gateway lacks enterprise OIDC" -}}
-{{- end -}}
-{{- if not .Values.existingSecretName -}}
-{{- fail "existingSecretName required; never pass shared keys in Helm values" -}}
-{{- end -}}
+{{- include "lsk-gateway.validate" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,10 +18,21 @@ spec:
         app.kubernetes.io/name: lsk-gateway
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.serviceAccount.name | quote }}
       automountServiceAccountToken: false
       containers:
         - name: gateway
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           image: "{{ .Values.image.repository }}@{{ .Values.image.digest }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -65,6 +65,12 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.existingSecretName | quote }}
                   key: DEMO_API_KEY
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 18
+            periodSeconds: 5
           readinessProbe:
             httpGet:
               path: /health
