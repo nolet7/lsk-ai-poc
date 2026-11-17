@@ -1,0 +1,24 @@
+# TEMPLATE ONLY — DO NOT APPLY UNCHANGED.
+# Argo CD must be installed/access-restricted first, then configure:
+# approved repository URL, target revision pinned to reviewed commit, and namespace.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: lsk-gateway-poc
+  namespace: argocd
+spec:
+  project: default # Replace with tightly scoped AppProject before deployment
+  source:
+    repoURL: https://github.com/nolet7/lsk-ai-poc.git
+    targetRevision: REPLACE_WITH_REVIEWED_COMMIT_SHA
+    path: deploy/aws/enterprise/kubernetes/helm/charts/lsk-gateway
+    helm:
+      releaseName: lsk
+      # Set image.repository/digest and existingSecretName in APPROVED values overrides.
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: lsk-poc
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=false
+    # Intentionally no automated sync until policy and app identity gates pass.
