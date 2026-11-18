@@ -451,3 +451,9 @@ together:
 - Output evaluation
 - Report file persistence
 
+
+## Fast path — business application first (GitHub Actions)
+
+The [Commercial AI application demo workflow](.github/workflows/commercial-ai-demo.yml) tests the real FastAPI gateway and the pinned Sales, Marketing, and Finance applications on a temporary GitHub runner. It needs **no AWS IAM/OIDC setup or persistent AWS resources**. It runs gateway contract and enterprise safety tests, brings up the four-service synthetic Compose stack, checks service discovery and Finance retrieval, and tears down the demo. This is a **CI integration demo, not a publicly hosted AWS deployment**. See [commercial request walkthrough](docs/COMMERCIAL_AI_WALKTHROUGH.md).
+
+The [separate infrastructure resource workflow](.github/workflows/enterprise-resource-deploy.yml) remains gated until dedicated OIDC deployment roles and GitHub protected-environment approvals are configured. Do not deploy synthetic-identity POC endpoints publicly or imply the platform is production-ready.
