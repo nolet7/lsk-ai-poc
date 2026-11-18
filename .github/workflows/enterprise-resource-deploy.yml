@@ -106,7 +106,7 @@ jobs:
         run: |
           set -euo pipefail
           terraform fmt -check -recursive
-          terraform init -input=false -lockfile=readonly
+          terraform init -input=false
           terraform validate
           terraform plan -input=false -lock-timeout=5m -out=network.tfplan
           terraform show -no-color network.tfplan > network-plan.txt
@@ -175,7 +175,7 @@ jobs:
           TF_VAR_expected_account_id: ${{ vars.AWS_DEV_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          terraform init -input=false -lockfile=readonly
+          terraform init -input=false
           terraform apply -input=false -lock-timeout=5m network.tfplan
           terraform output -json > output.json
           echo "Network deployment completed against the approved development account."
