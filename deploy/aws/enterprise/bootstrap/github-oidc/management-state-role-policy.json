@@ -1,0 +1,62 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BucketLocation",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetBucketLocation"
+      ],
+      "Resource": [
+        "arn:aws:s3:::lsk-ai-platform-proj1asr"
+      ]
+    },
+    {
+      "Sid": "ListOnlyNetworkState",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::lsk-ai-platform-proj1asr"
+      ],
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "development/network/terraform.tfstate",
+            "development/network/terraform.tfstate.tflock"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ReadWriteNetworkTerraformState",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::lsk-ai-platform-proj1asr/development/network/terraform.tfstate"
+      ]
+    },
+    {
+      "Sid": "ManageNetworkStateLockfile",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::lsk-ai-platform-proj1asr/development/network/terraform.tfstate.tflock"
+      ]
+    },
+    {
+      "Sid": "AssumeOnlyDevelopmentTerraformRole",
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Resource": "arn:aws:iam::179793764737:role/LSK-GitHub-Terraform-Deploy"
+    }
+  ]
+}
