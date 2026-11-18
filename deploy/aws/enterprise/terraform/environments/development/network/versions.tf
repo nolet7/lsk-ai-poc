@@ -9,7 +9,16 @@ terraform {
 }
 provider "aws" {
   region  = var.aws_region
-  profile = var.aws_profile
+  # In GitHub Actions, base credentials come from the management-account
+  # state role; assume only an approved member-account workload role.
+  profile = var.ci_mode ? null : var.aws_profile
+  dynamic "assume_role" {
+    for_each = var.ci_mode ? [var.ci_deployment_role_arn] : []
+    content {
+      role_arn     = assume_role.value
+      session_name = "lsk-gha-network"
+    }
+  }
   default_tags {
     tags = {
       Project     = "lsk-ai-poc"
