@@ -44,15 +44,37 @@ jobs:
 
   business-integration:
     name: Run the Sales / Marketing / Finance user journey
+    if: ${{ vars.RUN_PRIVATE_BUSINESS_INTEGRATION == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Clone exactly pinned business app revisions
-        run: |
-          set -euo pipefail
-          bash scripts/clone_business_apps.sh
-          bash scripts/verify_business_versions.sh
+      - name: Checkout pinned private Sales repository
+        uses: actions/checkout@v4
+        with:
+          repository: nolet7/lsk-sales-account
+          ref: c7cfd3bd9c43b3651cd58396a40522fd0e9eeb81
+          token: ${{ secrets.LSK_BUSINESS_REPOS_TOKEN }}
+          path: external/lsk-sales-account
+          persist-credentials: false
+      - name: Checkout pinned private Marketing repository
+        uses: actions/checkout@v4
+        with:
+          repository: nolet7/lsk-marketing
+          ref: 161882119381132b33ac71cc6e73ab3004223ee2
+          token: ${{ secrets.LSK_BUSINESS_REPOS_TOKEN }}
+          path: external/lsk-marketing
+          persist-credentials: false
+      - name: Checkout pinned private Finance repository
+        uses: actions/checkout@v4
+        with:
+          repository: nolet7/lsk-finance
+          ref: 52def231ef2f0bbc107bb3813bca6ceac186ddcb
+          token: ${{ secrets.LSK_BUSINESS_REPOS_TOKEN }}
+          path: external/lsk-finance
+          persist-credentials: false
+      - name: Verify exact app commits
+        run: bash scripts/verify_business_versions.sh
       - name: Configure one-time synthetic keys
         run: |
           set -euo pipefail
@@ -92,7 +114,7 @@ jobs:
           python -c 'import json; d=json.load(open("/tmp/retrieval.json")); assert d["mode"]=="retrieval-only" and d["evidence"]["sources"] and d["actions_taken"]==[]'
           echo "PASS: 3 connected business apps, Finance records, and ACL-scoped retrieval-only AI request"
       - name: Show logs on failure
-        if: failure()
+        if: failure() && hashFiles('.env.business') != ''
         run: docker compose --env-file .env.business -f compose.business.yml logs --tail=80
       - name: Stop synthetic services and delete temporary demo secrets
         if: always()
