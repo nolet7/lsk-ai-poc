@@ -113,3 +113,7 @@ POC uses only synthetic records and no externally exposed shared-key APIs. Pilot
 - [AWS EKS best practices](https://docs.aws.amazon.com/eks/latest/best-practices/introduction.html)
 - [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
 - [AWS Load Balancer Controller](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
+
+## GitHub Actions deployment control plane
+
+All subsequent AWS resource deployments should use the [manual resource selector and gated plan/apply workflow](../../.github/workflows/enterprise-resource-deploy.yml), with its [setup and security requirements](terraform/RESOURCE_DEPLOYMENT_GITHUB_ACTIONS.md). Only the development network module is currently implemented; GitHub OIDC, IAM roles, deployment approvals, lockfile and formatting checks must be completed before executing CI. The VPC was deployed locally prior to adopting the workflow and uses the same remote Terraform state key.
