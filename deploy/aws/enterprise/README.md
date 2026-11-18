@@ -30,6 +30,10 @@ These subtracks have dependencies rather than a strict mandatory execution order
 
 **Design status:** The chart and Argo Application are templates, not executed releases. Cluster Terraform modules, per-service production charts and Karpenter installation are task deliverables, not yet implemented. **Task 01 remains the first step.**
 
+## AWS Organizations account vending (optional gated foundation)
+
+[Terraform account-vending root](terraform/account-vending/README.md) is now included for creating a dedicated `LSK-AI-Development` member account from the AWS Organizations management account. **The default is `create_account=false`**, so the initial plan must create no account. This is a separate management-control-plane Terraform root, not part of the workload Terraform state. Do not apply until approved management-role credentials, budget, existing OU and Control Tower governance have been verified. Creating an account will not resolve the missing IAM Identity Center account assignments automatically.
+
 ## Architecture decisions
 - **Target:** Separate nonproduction and production AWS accounts, three AZs, private EKS nodes and service pods, dedicated IAM roles with EKS Pod Identity, private Aurora PostgreSQL with encrypted storage, S3 documents, Bedrock read-only inference, queue-backed approved proposals, OIDC workforce identity, ALB/WAF/TLS, CloudWatch + OTel + Prometheus/Grafana, GitHub Actions build and Argo CD GitOps deploy.
 - **IaC:** Terraform modules for network, cluster, identities, secrets, data and observability; one state per account/environment/component. Terraform resources and Kubernetes/Helm workloads have explicit ownership boundaries. Avoid a single enormous root state.
