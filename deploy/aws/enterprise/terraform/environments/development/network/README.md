@@ -1,6 +1,6 @@
 # Development network — low-cost Terraform POC
 
-**Status:** Code prepared for review, **NOT deployed**. This module only provisions a segregated 2-AZ VPC foundation after approval. It does NOT modify the existing AWS default VPC. See [Task 03](../../../tasks/03-network-foundation.md) and [deployment mentoring guide](../../../DEPLOYMENT_MAP_AND_ENGINEER_GUIDE.md).
+**Status:** Code prepared for review, **NOT deployed**. This module only provisions a segregated 2-AZ VPC foundation after approval. It does NOT modify the existing AWS default VPC. See [Task 03](../../../../tasks/03-network-foundation.md) and [deployment mentoring guide](../../../../DEPLOYMENT_MAP_AND_ENGINEER_GUIDE.md).
 
 ## Why this implementation
 
