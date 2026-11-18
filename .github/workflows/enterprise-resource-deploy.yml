@@ -1,0 +1,181 @@
+name: Enterprise resource deployment (manual + approval)
+
+on:
+  workflow_dispatch:
+    inputs:
+      resource:
+        description: "Which resource do you want to deploy?"
+        type: choice
+        required: true
+        options:
+          - network
+          - eks
+          - s3
+          - database
+          - sagemaker
+          - bedrock
+        default: network
+      action:
+        description: "Plan only or request approved deployment?"
+        type: choice
+        required: true
+        options:
+          - plan
+          - deploy
+        default: plan
+      environment_name:
+        description: "Deployment environment"
+        type: choice
+        required: true
+        options:
+          - development
+        default: development
+      confirmation:
+        description: "For deploy, enter DEPLOY network (plan: leave blank)"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-${{ inputs.environment_name }}-${{ inputs.resource }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      plan_name: ${{ steps.meta.outputs.plan_name }}
+    steps:
+      - name: Reject unimplemented resources (fail closed)
+        env:
+          RESOURCE: ${{ inputs.resource }}
+          TARGET: ${{ inputs.environment_name }}
+        run: |
+          set -euo pipefail
+          if [[ "$RESOURCE" != "network" || "$TARGET" != "development" ]]; then
+            echo "::error::Resource '$RESOURCE' / environment '$TARGET' is not yet implemented and cannot be deployed."
+            exit 1
+          fi
+      - name: Confirm CI configuration
+        env:
+          STATE_ROLE: ${{ vars.AWS_TERRAFORM_STATE_ROLE_ARN }}
+          DEPLOY_ROLE: ${{ vars.AWS_DEVELOPMENT_TERRAFORM_ROLE_ARN }}
+          DEV_ACCOUNT: ${{ vars.AWS_DEV_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          for key in STATE_ROLE DEPLOY_ROLE DEV_ACCOUNT; do
+            if [[ -z "${!key}" ]]; then
+              echo "::error::Required repository variable for $key has not been configured. See workflow README."
+              exit 1
+            fi
+          done
+          [[ "$DEV_ACCOUNT" =~ ^[0-9]{12}$ ]] || { echo "::error::Invalid development account ID"; exit 1; }
+          [[ "$DEPLOY_ROLE" =~ ^arn:aws:iam::${DEV_ACCOUNT}:role/.+ ]] || { echo "::error::The deployment role must belong to the approved account"; exit 1; }
+      - name: Checkout reviewed repository revision
+        uses: actions/checkout@v4
+      - name: Configure management-state OIDC role
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_TERRAFORM_STATE_ROLE_ARN }}
+          aws-region: us-east-1
+          role-session-name: LskTerraformPlan
+          allowed-account-ids: ${{ vars.AWS_MANAGEMENT_ACCOUNT_ID }}
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.14.0"
+          terraform_wrapper: false
+      - name: Metadata
+        id: meta
+        run: echo "plan_name=network-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+      - name: Terraform checks + plan
+        working-directory: deploy/aws/enterprise/terraform/environments/development/network
+        env:
+          AWS_REGION: us-east-2
+          AWS_DEFAULT_REGION: us-east-2
+          TF_IN_AUTOMATION: "true"
+          TF_VAR_ci_mode: "true"
+          TF_VAR_ci_deployment_role_arn: ${{ vars.AWS_DEVELOPMENT_TERRAFORM_ROLE_ARN }}
+          TF_VAR_expected_account_id: ${{ vars.AWS_DEV_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          terraform fmt -check -recursive
+          terraform init -input=false -lockfile=readonly
+          terraform validate
+          terraform plan -input=false -lock-timeout=5m -out=network.tfplan
+          terraform show -no-color network.tfplan > network-plan.txt
+          cat network-plan.txt
+      - name: Archive exact reviewed plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.plan_name }}
+          path: |
+            deploy/aws/enterprise/terraform/environments/development/network/network.tfplan
+            deploy/aws/enterprise/terraform/environments/development/network/network-plan.txt
+          if-no-files-found: error
+          retention-days: 1
+
+  apply:
+    if: ${{ inputs.action == 'deploy' }}
+    needs: plan
+    runs-on: ubuntu-latest
+    environment:
+      name: lsk-development-apply
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Enforce explicit deployment confirmation and gate setup
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          APPROVAL_CONFIGURED: ${{ vars.LSK_APPROVAL_GATE_CONFIGURED }}
+        run: |
+          set -euo pipefail
+          if [[ "$CONFIRMATION" != "DEPLOY network" ]]; then
+            echo "::error::Type exactly 'DEPLOY network' to request deployment."
+            exit 1
+          fi
+          if [[ "$APPROVAL_CONFIGURED" != "true" ]]; then
+            echo "::error::Protected GitHub environment and reviewer gate must be configured before apply."
+            exit 1
+          fi
+      - name: Checkout same revision
+        uses: actions/checkout@v4
+      - name: Configure management-state OIDC role
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_TERRAFORM_STATE_ROLE_ARN }}
+          aws-region: us-east-1
+          role-session-name: LskTerraformApply
+          allowed-account-ids: ${{ vars.AWS_MANAGEMENT_ACCOUNT_ID }}
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.14.0"
+          terraform_wrapper: false
+      - name: Download exact plan from this workflow run
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.plan.outputs.plan_name }}
+          path: deploy/aws/enterprise/terraform/environments/development/network/
+      - name: Apply saved reviewed plan
+        working-directory: deploy/aws/enterprise/terraform/environments/development/network
+        env:
+          AWS_REGION: us-east-2
+          AWS_DEFAULT_REGION: us-east-2
+          TF_IN_AUTOMATION: "true"
+          TF_VAR_ci_mode: "true"
+          TF_VAR_ci_deployment_role_arn: ${{ vars.AWS_DEVELOPMENT_TERRAFORM_ROLE_ARN }}
+          TF_VAR_expected_account_id: ${{ vars.AWS_DEV_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          terraform init -input=false -lockfile=readonly
+          terraform apply -input=false -lock-timeout=5m network.tfplan
+          terraform output -json > output.json
+          echo "Network deployment completed against the approved development account."
