@@ -1,3 +1,17 @@
+# Recommended first AWS POC: CI-built application release (no private GitHub token on EC2)
+
+The default path is **GitHub Actions → run application tests → package 4 services as a short-lived release artifact → explicitly approve an optional AWS lab launch**. GitHub Actions does not currently have development-account deployment IAM access. This workflow **only packages**, and starts **no billable AWS resources**. The existing AWS development VPC has no NAT or internet gateway and is **not suitable for downloading application dependencies**. A temporary instance in the existing default VPC with outbound connectivity is one possible lab path, after an explicit cost and security review. Avoid exposing the POC's demo-key endpoints on any public port.
+
+1. Open [Package commercial AI POC for AWS](https://github.com/nolet7/lsk-ai-poc/actions/workflows/package-commercial-ai.yml), select branch `feature/aws-enterprise-terraform`, and choose `Run workflow`. If the workflow is not visible in the Actions UI, it may need to be present on the default branch; the GH CLI may trigger using `gh workflow run package-commercial-ai.yml --ref feature/aws-enterprise-terraform`.
+2. Workflow checks out the pinned private Sales/Marketing/Finance repos using the existing read-only `LSK_BUSINESS_REPOS_TOKEN` secret. It runs FastAPI gateway tests then produces `lsk-commercial-ai-dev-poc-01.tar.gz` plus SHA256SUMS. The archive excludes obvious credentials, git metadata and local state, but **must still be treated as private source code**. Download only to an approved machine. Do not forward the artifact to a public location.
+3. After the chosen EC2 instance has been created with no inbound ports, outbound HTTPS and a properly scoped SSM instance profile, transfer the archive securely and verify `sha256sum -c SHA256SUMS` in its extracted location. Extract to a fresh empty `~/lsk-release` directory. Execute `bash deploy/aws/ec2/bootstrap-from-release.sh` as Ubuntu's non-root user to install Docker, generate per-host synthetic keys, build and start the Compose stack, then run the existing smoke tests. **This is a lab procedure, not a fully automated AWS deployment.**
+4. Use an AWS Systems Manager port-forward session to localhost:8090/8101/8102/8103. Do not open SSH or app ports to the internet. The current POC uses spoofable demo identity headers, local SQLite, no TLS ingress and no real review approval.
+5. Shut down and terminate the EC2 lab when finished. AWS Budgets alerts are not hard caps. **Do not launch a persistent EC2, NAT, EKS, ALB or Aurora resource on the $20/month lab budget without a cost check.**
+
+Once GitHub OIDC deployment roles and protected environments are configured, add a separate explicit **deploy application** job that downloads this *same immutable tested artifact* and uses short-lived AWS permissions. Never work around missing role permissions with permanent broad access keys.
+
+---
+
 # AWS EC2 deployment lab — four-service synthetic AI Enablement POC
 
 > **Scope and safety:** This deploys the existing Gateway + Sales + Marketing + Finance Docker Compose topology, not the separate legacy `app/main.py` RAG service. All records are synthetic. The gateway has demo shared-key auth and the POC deliberately blocks real business approvals and writes. **Never expose ports 8090/8101/8102/8103 to the internet or use customer data.** This is a single-instance lab, not enterprise production.
