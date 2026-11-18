@@ -25,6 +25,10 @@ These subtracks have dependencies rather than a strict mandatory execution order
 
 [**Kubernetes operations gap analysis and decisions**](kubernetes/OPERATIONS_GAPS.md) tracks concrete chart corrections, external dependencies, security boundaries and blockers to multi-replica availability. [The render-only safety test](kubernetes/tests/check-gateway-chart.sh) exercises valid/invalid Helm configuration; it still must be executed in a developer environment with Helm installed. The sample chart is explicitly limited to one POC replica, not an enterprise HA release.
 
+## Low-cost development networking (Ohio)
+
+The [Terraform development network starter](terraform/environments/development/network/README.md) targets the authorized existing member account in `us-east-2`, uses a distinct management-account S3 state key, and intentionally excludes NAT, EKS, EC2 and Aurora. **Code prepared; not deployed.** Review its plan and permission boundaries before any apply.
+
 ## Dedicated Kubernetes operations folder
 
 [**Kubernetes operations implementation track**](kubernetes/README.md) defines the EKS platform, AWS Load Balancer Controller, managed node groups / conditional Karpenter, Helm application starter chart, Argo CD manual-sync starter, day-2 operations, security boundaries and acceptance tests.
