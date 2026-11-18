@@ -1,0 +1,13 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "TrustManagementGitHubStateRoleOnly",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::001557542177:role/LSK-GitHub-Terraform-State"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
