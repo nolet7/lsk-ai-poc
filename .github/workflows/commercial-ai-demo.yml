@@ -1,0 +1,101 @@
+name: Commercial AI application demo (no AWS IAM required)
+
+on:
+  push:
+    branches:
+      - feature/aws-enterprise-terraform
+    paths:
+      - "integrations/**"
+      - "tests/**"
+      - "compose.business.yml"
+      - "scripts/clone_business_apps.sh"
+      - "scripts/verify_business_versions.sh"
+      - ".github/workflows/commercial-ai-demo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commercial-ai-demo-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  application-contracts:
+    name: Test real commercial AI gateway behavior
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install gateway test dependencies
+        run: python -m pip install 'fastapi>=0.115,<1' 'httpx>=0.27,<1' 'boto3>=1.35,<2'
+      - name: Contract, retrieval, authorization, idempotency and mock Bedrock tests
+        env:
+          LSK_STAGE: poc
+          LSK_ENABLE_DEMO_WRITES: 'false'
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p 'test_gateway_contract.py' -v
+          python -m unittest discover -s tests -p 'test_enterprise_architecture.py' -v
+
+  business-integration:
+    name: Run the Sales / Marketing / Finance user journey
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Clone exactly pinned business app revisions
+        run: |
+          set -euo pipefail
+          bash scripts/clone_business_apps.sh
+          bash scripts/verify_business_versions.sh
+      - name: Configure one-time synthetic keys
+        run: |
+          set -euo pipefail
+          {
+            echo "GATEWAY_API_KEY=$(openssl rand -hex 32)"
+            echo "DEMO_API_KEY=$(openssl rand -hex 32)"
+            echo "LSK_ENABLE_DEMO_WRITES=false"
+          } > .env.business
+          chmod 600 .env.business
+      - name: Build and start four business services
+        run: docker compose --env-file .env.business -f compose.business.yml up --build -d
+      - name: Verify user-facing API paths and real business integration
+        env:
+          LSK_STAGE: poc
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 40); do
+            if curl --silent --fail http://127.0.0.1:8090/health >/dev/null; then break; fi
+            sleep 3
+          done
+          curl --fail --silent --show-error http://127.0.0.1:8090/health | python -m json.tool
+          KEY="$(sed -n 's/^GATEWAY_API_KEY=//p' .env.business)"
+          AUTH=(-H "X-API-Key: $KEY" -H "X-Actor: employee")
+          for i in $(seq 1 30); do
+            DATA="$(curl --silent --show-error --fail "${AUTH[@]}" http://127.0.0.1:8090/v1/apps || true)"
+            if echo "$DATA" | python -c 'import sys,json; j=json.load(sys.stdin); assert all(j[d]["status"]=="available" for d in ("sales","marketing","finance"))' 2>/dev/null; then break; fi
+            sleep 3
+          done
+          echo "$DATA" | python -m json.tool
+          echo "$DATA" | python -c 'import sys,json; j=json.load(sys.stdin); assert all(j[d]["status"]=="available" for d in ("sales","marketing","finance"))'
+          curl --fail --silent --show-error "${AUTH[@]}" http://127.0.0.1:8090/v1/apps/finance/records > /tmp/finance.json
+          python -c 'import json; d=json.load(open("/tmp/finance.json")); assert d is not None'
+          curl --fail --silent --show-error "${AUTH[@]}" \
+            -H 'Content-Type: application/json' \
+            -d '{"domain":"finance","question":"What is the policy for invoice exception review?","use_model":false}' \
+            http://127.0.0.1:8090/v1/platform/ask > /tmp/retrieval.json
+          python -c 'import json; d=json.load(open("/tmp/retrieval.json")); assert d["mode"]=="retrieval-only" and d["evidence"]["sources"] and d["actions_taken"]==[]'
+          echo "PASS: 3 connected business apps, Finance records, and ACL-scoped retrieval-only AI request"
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose --env-file .env.business -f compose.business.yml logs --tail=80
+      - name: Stop synthetic services and delete temporary demo secrets
+        if: always()
+        run: |
+          docker compose --env-file .env.business -f compose.business.yml down --volumes --remove-orphans || true
+          rm -f .env.business
