@@ -1,0 +1,7 @@
+# Copy to terraform.tfvars outside OneDrive, never commit local tfvars.
+# Obtain from: aws sts get-caller-identity --profile lsk-development --query Account --output text
+expected_account_id     = "REPLACE_WITH_APPROVED_ACCOUNT_ID"
+owner_tag               = "lsk-ai-platform"
+aws_profile             = "lsk-development"
+aws_region              = "us-east-2"
+enable_internet_gateway = false
