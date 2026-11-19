@@ -1,5 +1,6 @@
 """Operator CLI for loading explicitly reviewed, non-sensitive pilot evidence."""
 import argparse
+from contextlib import closing
 import json
 from pathlib import Path
 import sqlite3
@@ -26,7 +27,7 @@ def seed(db_path: Path, file_path: Path) -> int:
             raise ValueError("Invalid evidence length")
         checked.append(tuple(row[k] for k in ("source_id", "tenant_id", "domain", "record_id", "content")))
     initialize_database(db_path)
-    with sqlite3.connect(db_path) as con:
+    with closing(sqlite3.connect(db_path)) as con, con:
         con.executemany("INSERT INTO sources VALUES (?,?,?,?,?)", checked)
     return len(checked)
 

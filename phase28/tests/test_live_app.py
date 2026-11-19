@@ -1,4 +1,5 @@
 """Private AI pilot integration tests: no AWS, no network, signed local JWTs."""
+from contextlib import closing
 import json
 import sqlite3
 import tempfile
@@ -31,7 +32,7 @@ class TestLiveApp(unittest.TestCase):
         self.addCleanup(temp.cleanup)
         self.db = Path(temp.name) / "evidence.sqlite"
         initialize_database(self.db)
-        with sqlite3.connect(self.db) as con:
+        with closing(sqlite3.connect(self.db)) as con, con:
             con.executemany("INSERT INTO sources VALUES (?,?,?,?,?)", [
                 ("doc-a", "tenant-a", "orders", "order-1", "Delivery requires confirmation."),
                 ("doc-b", "tenant-b", "orders", "order-2", "Other tenant secret."),

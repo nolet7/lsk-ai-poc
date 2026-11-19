@@ -1,6 +1,7 @@
 """Private EC2 Bedrock pilot. Fail closed unless configured; no business writes."""
 from __future__ import annotations
 
+from contextlib import contextmanager, closing
 from datetime import datetime, timezone
 import json
 import os
@@ -28,7 +29,7 @@ def initialize_database(db: Path) -> None:
     """Run during operator install. Never seed customer data automatically."""
     db = Path(db)
     db.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(db, timeout=10) as con:
+    with closing(sqlite3.connect(db, timeout=10)) as con, con:
         con.execute("PRAGMA journal_mode=WAL")
         con.executescript("""
           CREATE TABLE IF NOT EXISTS sources(
@@ -44,10 +45,19 @@ def initialize_database(db: Path) -> None:
         """)
 
 
+@contextmanager
 def _connect(db: Path):
+    """Commit or roll back the transaction and ALWAYS close the SQLite handle.
+
+    sqlite3.Connection.__exit__ alone does not close connections on Windows.
+    """
     con = sqlite3.connect(f"file:{db}?mode=rw", uri=True, timeout=10)
     con.row_factory = sqlite3.Row
-    return con
+    try:
+        with con:
+            yield con
+    finally:
+        con.close()
 
 
 def create_app(*, db_path: Path, verifier: OIDCVerifier, authorizer: DomainAuthorizer,
