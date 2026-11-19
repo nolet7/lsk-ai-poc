@@ -94,3 +94,27 @@ class PostgreSQLCommercialTests(unittest.TestCase):
                 (self.tenant_a,)).fetchall()
         self.assertIn(("exception_proposed",),events)
         self.assertIn(("exception_approved",),events)
+
+    def test_migration_creates_restricted_app_role(self):
+        from unittest.mock import patch
+        from phase28 import migrate_postgres
+        suffix=uuid4().hex[:10]
+        app_user="lsk_test_"+suffix
+        password="test-only-random-secret-123456789-"+suffix
+        with patch.dict(os.environ,{
+            "LSK_APP_DB_USERNAME":app_user,
+            "LSK_APP_DB_PASSWORD":password
+        }), patch("phase28.migrate_postgres.database_connect",self.connect):
+            migrate_postgres.main()
+            migrate_postgres.main()  # rerun is idempotent, including role grants
+        with psycopg.connect(host="localhost",port=5432,dbname="lsk_test",
+                            user=app_user,password=password,sslmode="disable") as db:
+            db.execute("SELECT source_id FROM sources WHERE tenant_id=%s",
+                       (self.tenant_a,)).fetchall()
+            db.execute(
+                """INSERT INTO audit(id,ts,actor,tenant_id,domain,outcome)
+                   VALUES (%s,now(),%s,%s,%s,%s)""",
+                (uuid4().hex,"app",self.tenant_a,"procurement","test"))
+            with self.assertRaises(psycopg.errors.InsufficientPrivilege):
+                db.execute("UPDATE procurement_pos SET quantity=1 WHERE tenant_id=%s",
+                           (self.tenant_a,))

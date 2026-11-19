@@ -115,3 +115,8 @@ variable "mcp_resource_url" {
     error_message = "MCP URL must be a private HTTPS host ending /mcp"
   }
 }
+
+variable "app_db_secret_arn" {
+  type = string
+  description = "Existing Secrets Manager secret with restricted app DB username/password; not master."
+}

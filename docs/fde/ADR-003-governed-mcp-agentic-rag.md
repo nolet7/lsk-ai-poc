@@ -54,7 +54,7 @@ prices, decide identities or authorize transaction mutations.
   DNS/certificate. A separate delegated audience-bound token flow is needed.
 - No durable long-running agent checkpoint; each bounded 4-step request is
   retryable but not resumable across process restart.
-- Current production RDS account is master credential; fix before external use.
+- Production IaC separates the normal app role from a one-shot master migration task; validate actual RDS grants and credential rotation before external use.
 - Quota is request-count only, not true dollar/token cost control.
 - Reviewer approval only updates synthetic exception status; never ERP.
 - Terraform and CI are static-validated; live MCP+ECS+OIDC tests outstanding.

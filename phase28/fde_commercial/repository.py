@@ -14,7 +14,12 @@ class ProcurementRepository:
     def __init__(self, connect):
         self.connect = connect
 
+    def _require_procurement(self, ctx: CommercialContext) -> None:
+        if not ctx.roles.intersection({"procurement", "procurement_reviewer"}):
+            raise PermissionError("Procurement access required")
+
     def case(self, ctx: CommercialContext, po_id: str) -> dict[str, Any]:
+        self._require_procurement(ctx)
         with self.connect() as db:
             row = db.execute(
                 """SELECT p.po_id,p.tenant_id,p.supplier_id,p.quantity,
@@ -33,6 +38,7 @@ class ProcurementRepository:
                          "invoice_total","certificate_expiry"), row))
 
     def evidence(self, ctx: CommercialContext, po_id: str) -> list[dict]:
+        self._require_procurement(ctx)
         with self.connect() as db:
             rows = db.execute(
                 """SELECT source_id,tenant_id,record_id,content FROM sources
@@ -44,6 +50,7 @@ class ProcurementRepository:
     def create_exception(self, ctx: CommercialContext, po_id: str, key: str,
                          findings: dict) -> dict:
         """Create a pending proposal once, atomically, with actor-scoped idempotency."""
+        self._require_procurement(ctx)
         if not key:
             raise ValueError("Idempotency key required")
         if not findings.get("price_mismatch") and not findings.get("certificate_expired"):
@@ -54,11 +61,17 @@ class ProcurementRepository:
                 """INSERT INTO procurement_exceptions
                    (id,tenant_id,po_id,requester,idempotency_key,fingerprint,status,created_at)
                    VALUES (%s,%s,%s,%s,%s,%s,'pending',%s)
-                   ON CONFLICT (tenant_id,requester,idempotency_key) DO UPDATE
-                   SET idempotency_key=EXCLUDED.idempotency_key
+                   ON CONFLICT (tenant_id,requester,idempotency_key) DO NOTHING
                    RETURNING id,po_id,fingerprint,status""",
                 (uuid4().hex, ctx.tenant_id, po_id, ctx.subject, key,
                  fingerprint, datetime.now(timezone.utc))).fetchone()
+            if row is None:
+                row = db.execute(
+                    """SELECT id,po_id,fingerprint,status FROM procurement_exceptions
+                       WHERE tenant_id=%s AND requester=%s AND idempotency_key=%s""",
+                    (ctx.tenant_id,ctx.subject,key)).fetchone()
+            if row is None or row[1] != po_id or row[2] != fingerprint:
+                raise ValueError("Idempotency key reused for different request")
             db.execute(
                 """INSERT INTO audit(id,ts,actor,tenant_id,domain,outcome)
                    VALUES (%s,%s,%s,%s,%s,%s)""",

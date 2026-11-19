@@ -14,3 +14,7 @@ output "rds_secret_arn" {
   value = var.enabled ? aws_db_instance.main[0].master_user_secret[0].secret_arn : null
   sensitive = true
 }
+
+output "migration_task_definition_arn" {
+  value = var.enabled ? aws_ecs_task_definition.migrate[0].arn : null
+}

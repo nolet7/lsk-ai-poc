@@ -169,11 +169,11 @@ resource "aws_iam_role_policy_attachment" "execution" {
 }
 resource "aws_iam_role_policy" "execution_secret" {
   count = var.enabled ? 1 : 0
-  name = "rds-managed-secret"
+  name = "restricted-app-db-secret"
   role = aws_iam_role.execution[0].id
   policy = jsonencode({ Version = "2012-10-17", Statement = [{
     Effect = "Allow", Action = ["secretsmanager:GetSecretValue"],
-    Resource = [aws_db_instance.main[0].master_user_secret[0].secret_arn] }] })
+    Resource = [var.app_db_secret_arn] }] })
 }
 resource "aws_iam_role" "task" {
   count = var.enabled ? 1 : 0
@@ -263,8 +263,8 @@ resource "aws_ecs_task_definition" "app" {
       { name = "LSK_MAX_DAILY_MODEL_CALLS", value = tostring(var.max_daily_model_calls) }
     ],
     secrets = [
-      { name = "LSK_DB_USERNAME", valueFrom = "${aws_db_instance.main[0].master_user_secret[0].secret_arn}:username::" },
-      { name = "LSK_DB_PASSWORD", valueFrom = "${aws_db_instance.main[0].master_user_secret[0].secret_arn}:password::" }
+      { name = "LSK_DB_USERNAME", valueFrom = "${var.app_db_secret_arn}:username::" },
+      { name = "LSK_DB_PASSWORD", valueFrom = "${var.app_db_secret_arn}:password::" }
     ],
     logConfiguration = { logDriver = "awslogs", options = {
       "awslogs-group" = aws_cloudwatch_log_group.app[0].name,

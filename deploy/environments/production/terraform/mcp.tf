@@ -118,8 +118,8 @@ resource "aws_ecs_task_definition" "mcp" {
       { name = "LSK_BEDROCK_MODEL_ID", value = var.bedrock_model_id }
     ],
     secrets = [
-      { name = "LSK_DB_USERNAME", valueFrom = "${aws_db_instance.main[0].master_user_secret[0].secret_arn}:username::" },
-      { name = "LSK_DB_PASSWORD", valueFrom = "${aws_db_instance.main[0].master_user_secret[0].secret_arn}:password::" }
+      { name = "LSK_DB_USERNAME", valueFrom = "${var.app_db_secret_arn}:username::" },
+      { name = "LSK_DB_PASSWORD", valueFrom = "${var.app_db_secret_arn}:password::" }
     ],
     logConfiguration = {
       logDriver = "awslogs",
