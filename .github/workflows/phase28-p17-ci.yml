@@ -1,0 +1,40 @@
+name: phase28-p17-linux-release-checks
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'phase28/**'
+      - 'deploy/aws/phase28_ec2/**'
+      - '.github/workflows/phase28-p17-ci.yml'
+  push:
+    branches: ['feature/phase28-bedrock-ai-lab']
+    paths:
+      - 'phase28/**'
+      - 'deploy/aws/phase28_ec2/**'
+      - '.github/workflows/phase28-p17-ci.yml'
+permissions:
+  contents: read
+jobs:
+  release-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-p28-13.txt
+      - name: Linux release and migration tests
+        run: |
+          python -m unittest discover -s phase28/tests -p 'test_release_manager.py' -v
+          python -m unittest discover -s phase28/tests -p 'test_ec2_rollout.py' -v
+      - name: Full Phase 28 regression suite
+        run: python -m unittest discover -s phase28/tests -v
+      - name: Shell syntax
+        run: bash -n deploy/aws/phase28_ec2/run-current.sh deploy/aws/phase28_ec2/prepare-venv.sh
+      - name: No Docker invocation
+        run: |
+          ! grep -E 'docker (build|run|push)' deploy/aws/phase28_ec2/run-current.sh deploy/aws/phase28_ec2/prepare-venv.sh
