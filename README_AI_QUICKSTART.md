@@ -24,10 +24,11 @@ sudo bash deploy/aws/phase28_ec2/install-ai.sh "$PWD"
 # /etc/lsk-phase28-ai/pilot.env   -- copy ai.env.example and fill
 sudo chmod 0640 /etc/lsk-phase28-ai/jwks.json /etc/lsk-phase28-ai/rbac.json /etc/lsk-phase28-ai/pilot.env
 sudo chown root:lskphase28 /etc/lsk-phase28-ai/jwks.json /etc/lsk-phase28-ai/rbac.json /etc/lsk-phase28-ai/pilot.env
+CHECKOUT="$PWD"  # Capture the reviewed checkout before changing directory
 cd /opt/lsk-phase28-ai/app
 sudo -u lskphase28 /opt/lsk-phase28-ai/venv/bin/python -m phase28.seed_pilot \
   --db /var/lib/lsk-phase28-ai/data.db \
-  --input "$PWD/deploy/aws/phase28_ec2/sample-sources.json"
+  --input "$CHECKOUT/deploy/aws/phase28_ec2/sample-sources.json"
 ```
 
 **The sample JSON lives in the checkout, not the installed app** (`install-ai.sh` copies only `phase28`).
