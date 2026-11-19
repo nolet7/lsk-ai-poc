@@ -1,0 +1,61 @@
+# P28-14: intentionally disabled deployment; no public Service or Ingress.
+# DO NOT scale up until trusted JWKS discovery, storage, audit, runtime wiring
+# and centralized quota are verified. Readiness intentionally returns 503.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phase28-gateway-diagnostic
+  namespace: default
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: phase28-gateway-diagnostic
+  template:
+    metadata:
+      labels:
+        app: phase28-gateway-diagnostic
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: gateway-diagnostic
+          image: registry.invalid/lsk/phase28-gateway:replace-with-digest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: AI_LIVE_INFERENCE
+              value: "false"
+            - name: AI_LIVE_INFERENCE_ACK
+              value: "false"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
