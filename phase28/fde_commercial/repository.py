@@ -59,6 +59,11 @@ class ProcurementRepository:
                    RETURNING id,po_id,fingerprint,status""",
                 (uuid4().hex, ctx.tenant_id, po_id, ctx.subject, key,
                  fingerprint, datetime.now(timezone.utc))).fetchone()
+            db.execute(
+                """INSERT INTO audit(id,ts,actor,tenant_id,domain,outcome)
+                   VALUES (%s,%s,%s,%s,%s,%s)""",
+                (uuid4().hex,datetime.now(timezone.utc),ctx.subject,
+                 ctx.tenant_id,"procurement","exception_proposed"))
         if row[1] != po_id or row[2] != fingerprint:
             raise ValueError("Idempotency key reused for different request")
         return {"exception_id": row[0], "status": row[3]}
@@ -75,6 +80,12 @@ class ProcurementRepository:
                    RETURNING id,status""",
                 (decision,ctx.subject,datetime.now(timezone.utc),
                  ctx.tenant_id,exception_id,ctx.subject)).fetchone()
+            if row is not None:
+                db.execute(
+                    """INSERT INTO audit(id,ts,actor,tenant_id,domain,outcome)
+                       VALUES (%s,%s,%s,%s,%s,%s)""",
+                    (uuid4().hex,datetime.now(timezone.utc),ctx.subject,
+                     ctx.tenant_id,"procurement","exception_"+decision))
         if row is None:
             raise LookupError("Pending exception unavailable or self-review forbidden")
         return {"exception_id": row[0], "status": row[1], "erp_updated": False}

@@ -45,7 +45,7 @@ def ensure_case(case: dict[str, Any], *, tenant_id: str, po_id: str) -> dict[str
         invoice = Decimal(str(case["invoice_total"]))
         if any(not x.is_finite() for x in (qty, unit, invoice)) or qty <= 0 or unit < 0 or invoice < 0:
             raise ValueError
-        expiry = date.fromisoformat(case["certificate_expiry"])
+        expiry = case["certificate_expiry"] if isinstance(case["certificate_expiry"], date) else date.fromisoformat(case["certificate_expiry"])
     except (ValueError, TypeError, InvalidOperation, OverflowError) as exc:
         raise ValueError("Invalid commercial figures") from exc
     expected = qty * unit

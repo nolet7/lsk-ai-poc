@@ -123,10 +123,22 @@ class APITests(unittest.TestCase):
         app=FastAPI()
         grants=DomainAuthorizer({"procurement":frozenset({"procurement"}),
                                  "procurement_reviewer":frozenset({"procurement"})})
-        def invalid_connection():
-            raise AssertionError("No database access expected for safe retrieval tests")
+        self.audit_events=[]
+        class AuditOnlyConnection:
+            def __init__(self, events):
+                self.events=events
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, exc, tb):
+                return False
+            def execute(self, sql, args):
+                if "INSERT INTO audit" not in sql:
+                    raise AssertionError("Unexpected database access in offline read-only test")
+                self.events.append(args)
+        def audit_connection():
+            return AuditOnlyConnection(self.audit_events)
         app.include_router(build_router(verifier=FakeVerifier(),authorizer=grants,
-                                        connect=invalid_connection,
+                                        connect=audit_connection,
                                         tools=InProcessTools(self.repo)))
         self.client=TestClient(app)
 
@@ -141,6 +153,7 @@ class APITests(unittest.TestCase):
         self.assertEqual(result.json()["findings"]["variance"],"5.00")
         self.assertIsNone(result.json()["proposal"])
         self.assertFalse(result.json()["erp_updated"])
+        self.assertEqual(len(self.audit_events),1)
 
     def test_deny_missing_invalid_token(self):
         result=self.client.post("/v1/commercial/procurement/review",

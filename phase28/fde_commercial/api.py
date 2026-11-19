@@ -105,6 +105,16 @@ def build_router(*, verifier, authorizer, connect, model_client=None, tools=None
                 answer,cited=checked["answer"],checked["cited_source_ids"]
             except Exception:
                 raise HTTPException(status_code=503,detail="Model answer unavailable") from None
+        # Audit before any proposal state mutation. Audit failure stops the request.
+        try:
+            with connect() as db:
+                db.execute(
+                    """INSERT INTO audit(id,ts,actor,tenant_id,domain,outcome)
+                       VALUES (%s,%s,%s,%s,%s,%s)""",
+                    (rid,datetime.now(timezone.utc),ctx.subject,ctx.tenant_id,
+                     "procurement","investigated"))
+        except psycopg.Error:
+            raise HTTPException(status_code=503,detail="Audit unavailable") from None
         proposal=None
         if payload.propose_exception:
             try:
