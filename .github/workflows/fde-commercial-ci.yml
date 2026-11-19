@@ -6,6 +6,7 @@ on:
     paths:
       - 'phase28/fde_commercial/**'
       - 'phase28/tests/test_fde_commercial.py'
+      - 'phase28/tests/test_fde_postgres.py'
       - 'phase28/production_app.py'
       - 'phase28/sql/002_procurement.sql'
       - '.github/workflows/fde-commercial-ci.yml'
@@ -13,6 +14,7 @@ on:
     paths:
       - 'phase28/fde_commercial/**'
       - 'phase28/tests/test_fde_commercial.py'
+      - 'phase28/tests/test_fde_postgres.py'
       - 'phase28/production_app.py'
 permissions:
   contents: read
