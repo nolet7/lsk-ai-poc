@@ -22,8 +22,8 @@ resource "aws_vpc_security_group_ingress_rule" "alb_clients" {
   security_group_id = aws_security_group.alb[0].id
   cidr_ipv4 = each.value
   ip_protocol = "tcp"
-  from_port = 80
-  to_port = 80
+  from_port = 443
+  to_port = 443
 }
 resource "aws_security_group" "task" {
   count = var.enabled ? 1 : 0
@@ -218,11 +218,13 @@ resource "aws_lb_target_group" "app" {
     matcher = "200"
   }
 }
-resource "aws_lb_listener" "http" {
+resource "aws_lb_listener" "https" {
   count = var.enabled ? 1 : 0
   load_balancer_arn = aws_lb.internal[0].arn
-  port = 80
-  protocol = "HTTP"
+  port = 443
+  protocol = "HTTPS"
+  certificate_arn = var.alb_certificate_arn
+  ssl_policy = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   default_action { 
     type = "forward"
     target_group_arn = aws_lb_target_group.app[0].arn
@@ -254,6 +256,8 @@ resource "aws_ecs_task_definition" "app" {
       { name = "LSK_OIDC_AUDIENCE", value = var.oidc_audience },
       { name = "LSK_RBAC_JSON", value = var.rbac_json },
       { name = "LSK_BEDROCK_MODEL_ID", value = var.bedrock_model_id },
+      { name = "LSK_COMMERCIAL_WORKFLOW", value = tostring(var.enable_commercial_workflow) },
+      { name = "LSK_MCP_URL", value = var.mcp_resource_url },
       { name = "AI_LIVE_INFERENCE", value = tostring(var.live_inference_enabled) },
       { name = "AI_LIVE_INFERENCE_ACK", value = tostring(var.live_inference_enabled) },
       { name = "LSK_MAX_DAILY_MODEL_CALLS", value = tostring(var.max_daily_model_calls) }
@@ -293,7 +297,7 @@ resource "aws_ecs_service" "app" {
     enable = true
     rollback = true
   }
-  depends_on = [aws_lb_listener.http, aws_vpc_endpoint.interface, aws_vpc_endpoint.s3,
+  depends_on = [aws_lb_listener.https, aws_vpc_endpoint.interface, aws_vpc_endpoint.s3,
                 aws_iam_role_policy.execution_secret, aws_iam_role_policy.task]
   lifecycle {
     precondition {

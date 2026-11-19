@@ -15,3 +15,6 @@ oidc_issuer = "https://REPLACE"
 oidc_audience = "lsk-phase28-api"
 live_inference_enabled = false
 alarm_topic_arn = "arn:aws:sns:us-east-2:ACCOUNT:APPROVED-ALERTS-TOPIC"
+
+enable_commercial_workflow = false
+mcp_resource_url = "" # after approved internal DNS+ACM+migration: https://ai.internal.example/mcp

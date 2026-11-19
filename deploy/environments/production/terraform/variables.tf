@@ -100,3 +100,18 @@ variable "alarm_topic_arn" {
   type = string
   description = "Existing approved SNS alert topic ARN"
 }
+
+variable "enable_commercial_workflow" {
+  type = bool
+  default = false
+  description = "Opt-in to separate authenticated MCP and LangGraph commercial path."
+}
+variable "mcp_resource_url" {
+  type = string
+  default = ""
+  description = "Approved private HTTPS URL ending in /mcp; TLS certificate must match DNS."
+  validation {
+    condition = var.mcp_resource_url == "" || can(regex("^https://[^/]+/mcp$", var.mcp_resource_url))
+    error_message = "MCP URL must be a private HTTPS host ending /mcp"
+  }
+}

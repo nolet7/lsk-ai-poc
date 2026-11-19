@@ -161,6 +161,11 @@ def create_app(*, verifier=None, authorizer=None, model_client=None):
             audit("error")
             raise HTTPException(status_code=503, detail="Model request unavailable") from None
 
+    if os.getenv("LSK_COMMERCIAL_WORKFLOW", "false") == "true":
+        # Separate protected MCP boundary; no fallback to insecure local tools.
+        from phase28.fde_commercial.api import build_router
+        app.include_router(build_router(verifier=verifier, authorizer=authorizer,
+                                        connect=database_connect, model_client=model_client))
     return app
 
 
