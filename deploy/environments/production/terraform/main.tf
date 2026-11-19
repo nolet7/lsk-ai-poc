@@ -108,7 +108,7 @@ resource "aws_vpc_endpoint" "s3" {
   vpc_endpoint_type = "Gateway"
   route_table_ids = var.private_route_table_ids
 }
-resource "aws_security_group_egress_rule" "task_to_s3" {
+resource "aws_vpc_security_group_egress_rule" "task_to_s3" {
   count = var.enabled ? 1 : 0
   security_group_id = aws_security_group.task[0].id
   prefix_list_id = data.aws_prefix_list.s3.id
