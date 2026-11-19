@@ -1,0 +1,6 @@
+# Supply organization-owned encrypted S3 state backend; never commit filled values.
+bucket = "REPLACE_TERRAFORM_STATE_BUCKET"
+key = "lsk-ai-poc/pilot/terraform.tfstate"
+region = "us-east-2"
+encrypt = true
+use_lockfile = true
