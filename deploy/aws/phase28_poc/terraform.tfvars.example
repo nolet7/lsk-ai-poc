@@ -1,0 +1,10 @@
+# Do not rename this file to terraform.tfvars until you have reviewed costs.
+enabled                       = false
+aws_region                    = "us-east-1"
+model_id                      = "anthropic.claude-3-5-haiku-20241022-v1:0"
+# Set real existing resource IDs before enabling. Never commit secrets.
+# vpc_id                        = "vpc-..."
+# private_subnet_ids            = ["subnet-..."]
+# application_security_group_id = "sg-..."
+# application_role_name        = "my-existing-app-role"
+# application_role_arn         = "arn:aws:iam::123456789012:role/my-existing-app-role"
