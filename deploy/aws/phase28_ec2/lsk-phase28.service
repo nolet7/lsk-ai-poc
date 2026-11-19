@@ -1,0 +1,32 @@
+[Unit]
+Description=LSK Phase28 diagnostic-only gateway (no business APIs)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=lskphase28
+Group=lskphase28
+WorkingDirectory=/opt/lsk-phase28/current
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONUNBUFFERED=1
+Environment=AI_LIVE_INFERENCE=false
+Environment=AI_LIVE_INFERENCE_ACK=false
+ExecStart=/opt/lsk-phase28/venv/bin/python -m uvicorn phase28.container_entry:app --host 127.0.0.1 --port 8080 --workers 1
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+LockPersonality=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

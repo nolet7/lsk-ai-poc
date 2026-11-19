@@ -1,0 +1,9 @@
+# Defaults provision ZERO instances. Copy to terraform.tfvars only after review.
+enabled = false
+aws_region = "us-east-1"
+# Task: validate approved region, current Ubuntu AMI, subnet, VPC and SSM instance profile.
+# ami_id = "ami-REPLACE"
+# vpc_id = "vpc-REPLACE"
+# private_subnet_id = "subnet-REPLACE"
+# existing_instance_profile_name = "approved-existing-ssm-profile"
+# egress_cidr = "10.0.0.0/8" # Only if compliant with egress architecture
