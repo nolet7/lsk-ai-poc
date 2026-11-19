@@ -10,7 +10,7 @@ class EC2DeploymentTests(unittest.TestCase):
         return (BASE / path).read_text(encoding="utf-8")
 
     def test_disabled_by_default(self):
-        self.assertIn('default = false', self.read('variables.tf'))
+        self.assertRegex(self.read('variables.tf'), r'variable\s+"enabled"\s*\{[^}]*\bdefault\s*=\s*false\b')
         self.assertIn('enabled = false', self.read('terraform.tfvars.example'))
         self.assertIn('count                       = var.enabled ? 1 : 0', self.read('main.tf'))
 
