@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install requirements
-        run: python -m pip install -r requirements-p28-13.txt
+        run: python -m pip install -r requirements-p28-13.txt -r deploy/environments/production/requirements.txt
       - name: All offline regressions including private AI
         run: python -m unittest discover -s phase28/tests -v
       - name: Python syntax
