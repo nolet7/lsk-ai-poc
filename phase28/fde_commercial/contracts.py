@@ -70,5 +70,12 @@ def ensure_evidence(evidence: list[dict], *, tenant_id: str, po_id: str) -> list
                 not isinstance(content, str) or not content or len(content) > 5000):
             raise ValueError("Invalid or duplicate source")
         seen.add(sid)
-        out.append({"id": sid, "content": content})
+        version=doc.get("source_version")
+        uri=doc.get("source_uri")
+        if version is not None and (not isinstance(version,int) or version < 1):
+            raise ValueError("Invalid source version")
+        if uri is not None and (not isinstance(uri,str) or not uri.startswith("urn:lsk:synthetic:")):
+            raise ValueError("Invalid source provenance")
+        out.append({"id": sid, "content": content,
+                    "source_version": version, "source_uri": uri})
     return out

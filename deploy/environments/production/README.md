@@ -56,3 +56,13 @@ Secrets Manager secret with a restricted application username and password.
 A separately scoped one-shot ECS migration task runs the schema and grants.
 The serving API and MCP task definitions do not inject the RDS master
 credential. See `OPERATIONS.md`; the migration still requires live validation.
+
+### Role-filtered procurement RAG
+
+`phase28/sql/003_procurement_knowledge.sql` and
+`phase28/fde_commercial/ingest.py` implement operator-reviewed synthetic
+document ingestion with immutable content checksums, tenant/PO scope, per-role
+allowlists, versioned source IDs and PostgreSQL lexical relevance search.
+The LangGraph workflow makes one bounded domain-specific retry if no relevant
+document matches. This is deliberately **not** a customer S3 ingestion or
+pgvector semantic search implementation.

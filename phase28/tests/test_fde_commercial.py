@@ -26,8 +26,8 @@ class FakeRepo:
                 "invoice_total":"65.00","currency":"USD","invoice_id":"inv-1",
                 "certificate_expiry":str(date.today()-timedelta(days=1))}
 
-    def evidence(self,ctx,po_id):
-        self.calls.append(("evidence",ctx.tenant_id,po_id))
+    def evidence(self,ctx,po_id,query):
+        self.calls.append(("evidence",ctx.tenant_id,po_id,query))
         return [{"source_id":"contract-9","tenant_id":ctx.tenant_id,
                  "po_id":po_id,"content":"Synthetic supplier agreement approved for demo."}]
 
@@ -38,8 +38,8 @@ class WrongTenantRepo(FakeRepo):
         return row
 
 class WrongEvidenceRepo(FakeRepo):
-    def evidence(self,ctx,po_id):
-        rows=super().evidence(ctx,po_id)
+    def evidence(self,ctx,po_id,query):
+        rows=super().evidence(ctx,po_id,query)
         rows[0]["tenant_id"]="different-tenant"
         return rows
 
@@ -96,15 +96,27 @@ class GraphTests(unittest.IsolatedAsyncioTestCase):
         repo=FakeRepo()
         ctx=CommercialContext("alice","tenant-a",frozenset({"procurement"}))
         result=await CommercialGraph(InProcessTools(repo)).run(ctx,"PO-3","Find mismatch")
-        self.assertEqual(result["steps"],4)
+        self.assertEqual(result["steps"],5)
         self.assertEqual(result["findings"]["variance"],"5.00")
         self.assertEqual(len(result["evidence"]),1)
-        self.assertEqual(repo.calls,[("case","tenant-a","PO-3"),("evidence","tenant-a","PO-3")])
+        self.assertEqual(repo.calls,[("case","tenant-a","PO-3"),("evidence","tenant-a","PO-3","Find mismatch")])
 
     async def test_cross_tenant_tool_result_denied(self):
         ctx=CommercialContext("alice","tenant-a",frozenset({"procurement"}))
         with self.assertRaises(ValueError):
             await CommercialGraph(InProcessTools(WrongTenantRepo())).run(ctx,"PO-3","Find mismatch")
+
+    async def test_single_bounded_retrieval_refinement(self):
+        class EmptyFirst(FakeRepo):
+            def evidence(self,ctx,po_id,query):
+                rows=super().evidence(ctx,po_id,query)
+                return rows if query=="invoice contract certificate supplier policy" else []
+        repo=EmptyFirst()
+        ctx=CommercialContext("alice","tenant-a",frozenset({"procurement"}))
+        state=await CommercialGraph(InProcessTools(repo)).run(ctx,"PO-3","Unrelated question")
+        self.assertEqual(state["steps"],8)
+        self.assertEqual(state["retries"],1)
+        self.assertTrue(state["evidence"])
 
     async def test_cross_tenant_document_denied(self):
         ctx=CommercialContext("alice","tenant-a",frozenset({"procurement"}))

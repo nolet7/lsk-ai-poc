@@ -1,0 +1,29 @@
+[
+  {
+    "tenant_id": "demo-tenant",
+    "source_id": "contract-po-001-v1",
+    "po_id": "PO-001",
+    "doc_type": "contract",
+    "source_version": 1,
+    "source_uri": "urn:lsk:synthetic:contract-po-001",
+    "classification": "synthetic",
+    "authorized_roles": [
+      "procurement",
+      "procurement_reviewer"
+    ],
+    "content": "For PO-001, the agreed invoice calculation is ordered quantity multiplied by the contract unit price. Any mismatch requires a pending exception and independent procurement review."
+  },
+  {
+    "tenant_id": "demo-tenant",
+    "source_id": "certificate-po-001-v1",
+    "po_id": "PO-001",
+    "doc_type": "certificate",
+    "source_version": 1,
+    "source_uri": "urn:lsk:synthetic:certificate-po-001",
+    "classification": "synthetic",
+    "authorized_roles": [
+      "procurement"
+    ],
+    "content": "Supplier compliance certificates must have valid expiration dates before the PO exception can be closed."
+  }
+]

@@ -25,6 +25,7 @@ class PostgreSQLCommercialTests(unittest.TestCase):
         with cls.connect() as db:
             db.execute((root/"001_init_postgres.sql").read_text())
             db.execute((root/"002_procurement.sql").read_text())
+            db.execute((root/"003_procurement_knowledge.sql").read_text())
 
     def setUp(self):
         from phase28.fde_commercial.repository import ProcurementRepository
@@ -55,19 +56,40 @@ class PostgreSQLCommercialTests(unittest.TestCase):
                        VALUES (%s,%s,%s,%s)""",
                     (tenant,"vendor-1","cert-"+po,date.today()-timedelta(days=2)))
                 db.execute(
-                    """INSERT INTO sources
-                       (source_id,tenant_id,domain,record_id,content)
-                       VALUES (%s,%s,'procurement',%s,%s)""",
-                    ("doc-"+po,tenant,po,"Synthetic approved delivery policy."))
+                    """INSERT INTO procurement_knowledge
+                       (tenant_id,source_id,po_id,doc_type,source_version,source_uri,
+                        classification,authorized_roles,content,content_sha256,approved_at)
+                       VALUES (%s,%s,%s,'contract',1,%s,'synthetic',%s,%s,%s,now())""",
+                    (tenant,"doc-"+po,po,"urn:lsk:synthetic:doc-"+po,
+                     ["procurement","procurement_reviewer"],
+                     "Synthetic invoice contract difference policy for procurement review.",
+                     "0"*64))
 
     def test_tenant_scoped_business_and_document_reads(self):
         a=self.repo.case(self.buyer,self.po)
         self.assertEqual(a["tenant_id"],self.tenant_a)
         self.assertEqual(Decimal(ensure_case(a,tenant_id=self.tenant_a,po_id=self.po)["variance"]),Decimal("5"))
-        self.assertEqual(self.repo.evidence(self.buyer,self.po)[0]["po_id"],self.po)
-        self.assertEqual(self.repo.evidence(self.foreign,self.po),[])
+        self.assertEqual(self.repo.evidence(self.buyer,self.po,"invoice")[0]["po_id"],self.po)
+        self.assertEqual(self.repo.evidence(self.foreign,self.po,"invoice"),[])
         with self.assertRaises(LookupError):
             self.repo.case(self.foreign,self.po)
+
+    def test_document_role_acl_applied_before_search(self):
+        with self.connect() as db:
+            db.execute(
+                """INSERT INTO procurement_knowledge
+                   (tenant_id,source_id,po_id,doc_type,source_version,source_uri,
+                    classification,authorized_roles,content,content_sha256,approved_at)
+                   VALUES (%s,%s,%s,'certificate',1,%s,'synthetic',%s,%s,%s,now())""",
+                (self.tenant_a,"restricted-"+self.po,self.po,
+                 "urn:lsk:synthetic:restricted-"+self.po,
+                 ["procurement_reviewer"],
+                 "Private certificate invoice review record only for reviewer.","a"*64))
+        buyer=self.repo.evidence(self.buyer,self.po,"invoice")
+        reviewer=self.repo.evidence(self.reviewer,self.po,"invoice")
+        self.assertEqual(len(buyer),1)
+        self.assertEqual(len(reviewer),2)
+        self.assertEqual(self.repo.evidence(self.buyer,self.po,"nonexistentphrase"),[])
 
     def test_idempotent_pending_exception_and_separate_review(self):
         finding=ensure_case(self.repo.case(self.buyer,self.po),
@@ -94,6 +116,21 @@ class PostgreSQLCommercialTests(unittest.TestCase):
                 (self.tenant_a,)).fetchall()
         self.assertIn(("exception_proposed",),events)
         self.assertIn(("exception_approved",),events)
+
+    def test_immutable_synthetic_ingestion(self):
+        from phase28.fde_commercial.ingest import ingest
+        doc={"tenant_id":self.tenant_a,"source_id":"ingested-"+self.po,
+             "po_id":self.po,"doc_type":"contract","source_version":1,
+             "source_uri":"urn:lsk:synthetic:ingested-"+self.po,
+             "classification":"synthetic","authorized_roles":["procurement"],
+             "content":"Approved synthetic invoice variance review clause."}
+        self.assertEqual(ingest([doc],connect=self.connect),1)
+        self.assertEqual(ingest([doc],connect=self.connect),1)
+        changed={**doc,"content":"Altered document without new version"}
+        with self.assertRaises(ValueError):
+            ingest([changed],connect=self.connect)
+        with self.assertRaises(ValueError):
+            ingest([{**doc,"classification":"customer-confidential"}],connect=self.connect)
 
     def test_migration_creates_restricted_app_role(self):
         from unittest.mock import patch

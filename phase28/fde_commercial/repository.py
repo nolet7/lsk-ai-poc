@@ -37,15 +37,26 @@ class ProcurementRepository:
                          "contract_unit_price","currency","invoice_id",
                          "invoice_total","certificate_expiry"), row))
 
-    def evidence(self, ctx: CommercialContext, po_id: str) -> list[dict]:
+    def evidence(self, ctx: CommercialContext, po_id: str, query: str) -> list[dict]:
+        """Pre-filter tenant, PO and role BEFORE lexical relevance scoring."""
         self._require_procurement(ctx)
+        if not isinstance(query,str) or not 1 <= len(query) <= 256:
+            raise ValueError("Invalid search query")
         with self.connect() as db:
             rows = db.execute(
-                """SELECT source_id,tenant_id,record_id,content FROM sources
-                   WHERE tenant_id=%s AND domain='procurement' AND record_id=%s
-                   ORDER BY source_id LIMIT 10""", (ctx.tenant_id, po_id)).fetchall()
-        return [{"source_id": x[0], "tenant_id": x[1], "po_id": x[2], "content": x[3]}
-                for x in rows]
+                """SELECT source_id,tenant_id,po_id,content,source_version,source_uri
+                   FROM procurement_knowledge
+                   WHERE tenant_id=%s AND po_id=%s
+                     AND classification='synthetic' AND retired_at IS NULL
+                     AND authorized_roles && %s::text[]
+                     AND to_tsvector('english',content) @@ plainto_tsquery('english',%s)
+                   ORDER BY ts_rank(to_tsvector('english',content),
+                                    plainto_tsquery('english',%s)) DESC,source_id
+                   LIMIT 10""",
+                (ctx.tenant_id,po_id,sorted(ctx.roles),query,query)).fetchall()
+        return [{"source_id":r[0],"tenant_id":r[1],"po_id":r[2],
+                 "content":r[3],"source_version":r[4],"source_uri":r[5]}
+                for r in rows]
 
     def create_exception(self, ctx: CommercialContext, po_id: str, key: str,
                          findings: dict) -> dict:

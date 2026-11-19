@@ -86,11 +86,11 @@ def build_server(repo: ProcurementRepository | None = None):
         return json.loads(json.dumps(case, default=str))
 
     @mcp.tool()
-    def procurement_document_search(po_id: str) -> dict:
+    def procurement_document_search(po_id: str, query: str) -> dict:
         """Search only tenant+PO-scoped procurement evidence."""
         from phase28.fde_commercial.contracts import ensure_evidence
         ctx = current_context()
-        docs = store.evidence(ctx, po_id)
+        docs = store.evidence(ctx, po_id, query)
         ensure_evidence(docs, tenant_id=ctx.tenant_id, po_id=po_id)
         return {"documents": docs}
 

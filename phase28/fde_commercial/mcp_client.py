@@ -42,8 +42,8 @@ class MCPTools:
     async def case(self, ctx: CommercialContext, po_id: str) -> dict:
         return await self._call(ctx, "procurement_case_read", {"po_id": po_id})
 
-    async def evidence(self, ctx: CommercialContext, po_id: str) -> list[dict]:
-        result = await self._call(ctx, "procurement_document_search", {"po_id": po_id})
+    async def evidence(self, ctx: CommercialContext, po_id: str, query: str) -> list[dict]:
+        result = await self._call(ctx, "procurement_document_search", {"po_id": po_id, "query": query})
         if not isinstance(result, dict) or set(result) != {"documents"}:
             raise ValueError("Unexpected evidence tool response")
         return result["documents"]

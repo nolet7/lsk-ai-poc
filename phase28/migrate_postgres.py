@@ -23,7 +23,7 @@ def main():
         raise RuntimeError("Application DB password must be at least 24 characters")
     with database_connect() as db:
         db.execute("SELECT pg_advisory_xact_lock(20280028)")
-        for file in (SCHEMA / "001_init_postgres.sql", SCHEMA / "002_procurement.sql"):
+        for file in (SCHEMA / "001_init_postgres.sql", SCHEMA / "002_procurement.sql", SCHEMA / "003_procurement_knowledge.sql"):
             db.execute(file.read_text(encoding="utf-8"))
         role = sql.Identifier(user)
         if db.execute("SELECT 1 FROM pg_roles WHERE rolname=%s", (user,)).fetchone() is None:
@@ -37,7 +37,7 @@ def main():
         db.execute(sql.SQL("GRANT USAGE ON SCHEMA public TO {}").format(role))
         db.execute(sql.SQL(
             "GRANT SELECT ON TABLE sources, procurement_pos, procurement_invoices, "
-            "procurement_certificates TO {}").format(role))
+            "procurement_certificates, procurement_knowledge TO {}").format(role))
         db.execute(sql.SQL(
             "GRANT SELECT, INSERT ON TABLE audit, model_attempts, procurement_exceptions TO {}").format(role))
         db.execute(sql.SQL(

@@ -47,9 +47,13 @@ prices, decide identities or authorize transaction mutations.
 ## Explicit limitations / next release gates
 - PostgreSQL records are synthetic; enterprise ERP/CRM/WMS connectors and
   document-level entitlements are not connected.
-- Evidence retrieval is tenant+PO SQL, not embedding/hybrid vector RAG.
-  Implement S3 ingestion, pgvector search and ACL metadata only after source
-  ownership, retention and accuracy evaluation gates.
+- Approved synthetic procurement documents now use PostgreSQL full-text search
+  with tenant, PO and role ACL predicates **before** ranking; citations carry
+  source versions and provenance identifiers. The LangGraph graph performs at most
+  one fixed domain-query refinement when no relevant text is found.
+- This is **lexical, ACL-aware RAG**, not semantic vector/hybrid RAG. Real S3
+  ingestion, embeddings/pgvector, fine-grained source ACLs and relevance
+  evaluation remain future release gates.
 - MCP shares token audience in this first slice and requires approved private
   DNS/certificate. A separate delegated audience-bound token flow is needed.
 - No durable long-running agent checkpoint; each bounded 4-step request is

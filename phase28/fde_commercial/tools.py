@@ -13,5 +13,5 @@ class InProcessTools:
     async def case(self, ctx: CommercialContext, po_id: str):
         return self.repository.case(ctx, po_id)
 
-    async def evidence(self, ctx: CommercialContext, po_id: str):
-        return self.repository.evidence(ctx, po_id)
+    async def evidence(self, ctx: CommercialContext, po_id: str, query: str):
+        return self.repository.evidence(ctx, po_id, query)
