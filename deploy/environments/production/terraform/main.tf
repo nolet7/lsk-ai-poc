@@ -297,7 +297,7 @@ resource "aws_ecs_service" "app" {
                 aws_iam_role_policy.execution_secret, aws_iam_role_policy.task]
   lifecycle {
     precondition {
-      condition = var.approved_release && length(local.azs) >= 2
+      condition = var.approved_release && length(local.azs) >= 2 && can(regex("^arn:aws:sns:", var.alarm_topic_arn))
       error_message = "Explicit release approval and 2 AZs required."
     }
   }

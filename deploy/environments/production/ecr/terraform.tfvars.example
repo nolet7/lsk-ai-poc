@@ -1,0 +1,3 @@
+enabled = false
+aws_region = "us-east-2"
+repository_name = "lsk-phase28-ai"

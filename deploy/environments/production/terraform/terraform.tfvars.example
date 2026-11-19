@@ -14,3 +14,4 @@ jwks_secret_arn = "arn:aws:secretsmanager:us-east-2:ACCOUNT:secret:REPLACE"
 oidc_issuer = "https://REPLACE"
 oidc_audience = "lsk-phase28-api"
 live_inference_enabled = false
+alarm_topic_arn = "arn:aws:sns:us-east-2:ACCOUNT:APPROVED-ALERTS-TOPIC"

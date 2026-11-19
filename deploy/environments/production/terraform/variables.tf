@@ -95,3 +95,8 @@ variable "live_inference_enabled" {
   type = bool
   default = false
 }
+
+variable "alarm_topic_arn" {
+  type = string
+  description = "Existing approved SNS alert topic ARN"
+}

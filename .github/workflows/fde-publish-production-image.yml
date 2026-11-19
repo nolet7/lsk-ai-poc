@@ -1,0 +1,43 @@
+name: fde-publish-production-image
+on:
+  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production-image-publish
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Require configured deployment role
+        env:
+          ROLE: ${{ vars.LSK_ECR_PUBLISH_ROLE_ARN }}
+          REPO: ${{ vars.LSK_ECR_REPOSITORY }}
+        run: |
+          test -n "$ROLE" || { echo "Set restricted OIDC role ARN in environment vars" >&2; exit 2; }
+          test -n "$REPO" || { echo "Set approved ECR repository in environment vars" >&2; exit 2; }
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.LSK_ECR_PUBLISH_ROLE_ARN }}
+          aws-region: us-east-2
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+      - name: Build, publish and record digest
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPOSITORY: ${{ vars.LSK_ECR_REPOSITORY }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          docker build --pull --file deploy/environments/production/Dockerfile \
+            --tag "$REGISTRY/$REPOSITORY:$COMMIT_SHA" .
+          docker push "$REGISTRY/$REPOSITORY:$COMMIT_SHA"
+          DIGEST="$(aws ecr describe-images --repository-name "$REPOSITORY" \
+            --image-ids imageTag="$COMMIT_SHA" --query 'imageDetails[0].imageDigest' --output text)"
+          test "$DIGEST" != "None"
+          echo "Pin for Terraform: $REGISTRY/$REPOSITORY@$DIGEST"
+          echo "Manual vulnerability review and release approval are still required."

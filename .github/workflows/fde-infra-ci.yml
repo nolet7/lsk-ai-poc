@@ -20,7 +20,7 @@ permissions:
 jobs:
   static:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6
         with:
@@ -31,15 +31,14 @@ jobs:
       - name: Python syntax
         run: python -m py_compile phase28/production_app.py phase28/migrate_postgres.py
       - name: Shell syntax
-        run: |
-          bash -n deploy/environments/pilot/scripts/*.sh
+        run: bash -n deploy/environments/pilot/scripts/*.sh
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.14.0'
-      - name: Terraform validation (no cloud apply)
+      - name: Terraform validation (never apply)
         run: |
-          for env in pilot production; do
-            cd "$GITHUB_WORKSPACE/deploy/environments/$env/terraform"
+          for env in pilot/terraform production/ecr production/terraform; do
+            cd "$GITHUB_WORKSPACE/deploy/environments/$env"
             terraform fmt -recursive
             terraform init -backend=false -input=false
             terraform validate
