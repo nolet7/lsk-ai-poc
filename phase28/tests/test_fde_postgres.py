@@ -20,7 +20,7 @@ class PostgreSQLCommercialTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.dsn=os.environ["LSK_TEST_PG_DSN"]
-        cls.connect=lambda: psycopg.connect(cls.dsn, connect_timeout=3)
+        cls.connect=staticmethod(lambda: psycopg.connect(cls.dsn, connect_timeout=3))
         root=Path(__file__).resolve().parents[1]/"sql"
         with cls.connect() as db:
             db.execute((root/"001_init_postgres.sql").read_text())
