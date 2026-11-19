@@ -1,0 +1,9 @@
+[
+  {
+    "source_id": "demo-order-policy-1",
+    "tenant_id": "demo-tenant",
+    "domain": "orders",
+    "record_id": "demo-order-1",
+    "content": "Demo policy only: The support team checks delivery status in the ERP before confirming a delivery date. Never invent shipment tracking numbers."
+  }
+]

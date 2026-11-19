@@ -1,0 +1,32 @@
+name: phase28-private-ai-deploy-ci
+on:
+  workflow_dispatch:
+  push:
+    branches: ['feature/phase28-ai-deploy']
+  pull_request:
+    paths: ['phase28/**', 'deploy/aws/phase28_ec2/**', '.github/workflows/phase28-ai-deploy-ci.yml']
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install requirements
+        run: python -m pip install -r requirements-p28-13.txt
+      - name: All offline regressions including private AI
+        run: python -m unittest discover -s phase28/tests -v
+      - name: Python syntax
+        run: python -m py_compile phase28/live_app.py phase28/seed_pilot.py
+      - name: Shell syntax
+        run: bash -n deploy/aws/phase28_ec2/install-ai.sh
+      - name: Terraform formatting if installed
+        run: |
+          cd deploy/aws/phase28_ec2
+          if command -v terraform >/dev/null; then terraform fmt -check -recursive; fi
