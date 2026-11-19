@@ -1,0 +1,4 @@
+{
+  "support_agent": ["orders", "invoices"],
+  "sales_agent": ["orders"]
+}
