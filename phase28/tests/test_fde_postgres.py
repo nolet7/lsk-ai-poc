@@ -131,6 +131,8 @@ class PostgreSQLCommercialTests(unittest.TestCase):
             ingest([changed],connect=self.connect)
         with self.assertRaises(ValueError):
             ingest([{**doc,"classification":"customer-confidential"}],connect=self.connect)
+        with self.assertRaises(ValueError):
+            ingest([{**doc,"authorized_roles":["procurement_reviewer"]}],connect=self.connect)
 
     def test_migration_creates_restricted_app_role(self):
         from unittest.mock import patch

@@ -42,7 +42,8 @@ def validate_record(doc: dict) -> dict:
     content=doc["content"]
     if not isinstance(content,str) or not 1<=len(content)<=5000:
         raise ValueError("Invalid document content")
-    return {**doc,"content_sha256":hashlib.sha256(content.encode("utf-8")).hexdigest()}
+    return {**doc,"authorized_roles":sorted(roles),
+            "content_sha256":hashlib.sha256(content.encode("utf-8")).hexdigest()}
 
 def ingest(docs: list[dict], connect=database_connect) -> int:
     if not isinstance(docs,list) or not 1<=len(docs)<=100:
@@ -65,11 +66,15 @@ def ingest(docs: list[dict], connect=database_connect) -> int:
                  datetime.now(timezone.utc))).fetchone()
             if row is None:
                 existing=db.execute(
-                    """SELECT content_sha256,source_version FROM procurement_knowledge
+                    """SELECT po_id,doc_type,source_version,source_uri,classification,
+                              authorized_roles,content_sha256 FROM procurement_knowledge
                        WHERE tenant_id=%s AND source_id=%s""",
                     (d["tenant_id"],d["source_id"])).fetchone()
-                if existing is None or existing[0]!=d["content_sha256"] or existing[1]!=d["source_version"]:
-                    raise ValueError("Immutable document ID reused with new content/version")
+                expected=(d["po_id"],d["doc_type"],d["source_version"],
+                          d["source_uri"],d["classification"],d["authorized_roles"],
+                          d["content_sha256"])
+                if existing is None or tuple(existing)!=expected:
+                    raise ValueError("Immutable document ID reused with changed content or ACL")
     return len(prepared)
 
 def main() -> None:

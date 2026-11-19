@@ -1,5 +1,6 @@
 """Authenticated enterprise procurement investigation. No direct ERP writes."""
 from __future__ import annotations
+import asyncio
 from datetime import datetime,timezone
 from uuid import uuid4
 import json
@@ -59,12 +60,12 @@ def build_router(*, verifier, authorizer, connect, model_client=None, tools=None
             raise HTTPException(status_code=422,detail="Idempotency key required")
         rid=uuid4().hex
         try:
-            state=await graph.run(ctx,payload.po_id,payload.question)
+            state=await asyncio.wait_for(graph.run(ctx,payload.po_id,payload.question), timeout=30.0)
             findings=state["findings"]
             docs=state["evidence"]
         except LookupError:
             raise HTTPException(status_code=404,detail="Business record not available") from None
-        except (ValueError,RuntimeError,psycopg.Error):
+        except (ValueError,RuntimeError,psycopg.Error,asyncio.TimeoutError):
             raise HTTPException(status_code=503,detail="Business evidence unavailable") from None
         answer=None
         cited=[]
@@ -75,7 +76,7 @@ def build_router(*, verifier, authorizer, connect, model_client=None, tools=None
             if not docs:
                 raise HTTPException(status_code=422,detail="No authorized evidence; model invocation denied")
             try:
-                reserve(ctx.tenant_id,rid)
+                await asyncio.to_thread(reserve,ctx.tenant_id,rid)
             except HTTPException:
                 raise
             except (psycopg.Error,ValueError,RuntimeError):
@@ -93,9 +94,11 @@ def build_router(*, verifier, authorizer, connect, model_client=None, tools=None
                 "sources":[{"id":d["id"],"content":d["content"][:1200]} for d in docs]
             })
             try:
-                response=client.converse(modelId=os.environ["LSK_BEDROCK_MODEL_ID"],
-                  messages=[{"role":"user","content":[{"text":prompt}]}],
-                  inferenceConfig={"maxTokens":400,"temperature":0})
+                response=await asyncio.to_thread(
+                    client.converse,
+                    modelId=os.environ["LSK_BEDROCK_MODEL_ID"],
+                    messages=[{"role":"user","content":[{"text":prompt}]}],
+                    inferenceConfig={"maxTokens":400,"temperature":0})
                 content=response["output"]["message"]["content"]
                 obj=json.loads("".join(b["text"] for b in content))
                 if not isinstance(obj,dict) or set(obj)!={"answer","cited_source_ids"}:
@@ -105,20 +108,22 @@ def build_router(*, verifier, authorizer, connect, model_client=None, tools=None
                 answer,cited=checked["answer"],checked["cited_source_ids"]
             except Exception:
                 raise HTTPException(status_code=503,detail="Model answer unavailable") from None
-        # Audit before any proposal state mutation. Audit failure stops the request.
-        try:
+        # Audit before state mutation. Fail closed when the durable sink is down.
+        def record_audit():
             with connect() as db:
                 db.execute(
                     """INSERT INTO audit(id,ts,actor,tenant_id,domain,outcome)
                        VALUES (%s,%s,%s,%s,%s,%s)""",
                     (rid,datetime.now(timezone.utc),ctx.subject,ctx.tenant_id,
                      "procurement","investigated"))
+        try:
+            await asyncio.to_thread(record_audit)
         except psycopg.Error:
             raise HTTPException(status_code=503,detail="Audit unavailable") from None
         proposal=None
         if payload.propose_exception:
             try:
-                proposal=repo.create_exception(ctx,payload.po_id,payload.idempotency_key,findings)
+                proposal=await asyncio.to_thread(repo.create_exception,ctx,payload.po_id,payload.idempotency_key,findings)
             except ValueError as exc:
                 raise HTTPException(status_code=409,detail="Exception proposal conflict or not warranted") from None
             except psycopg.Error:
@@ -126,6 +131,10 @@ def build_router(*, verifier, authorizer, connect, model_client=None, tools=None
         return {"request_id":rid,"status":"reviewed",
                 "findings":findings,"answer":answer,"cited_source_ids":cited,
                 "retrieved_source_ids":[d["id"] for d in docs],
+                "source_provenance":[
+                    {"source_id":d["id"],"version":d.get("source_version"),
+                     "source_uri":d.get("source_uri")} for d in docs
+                ],
                 "proposal":proposal,"actions_taken":[],"erp_updated":False}
 
     @router.post("/exceptions/{exception_id}/decision")

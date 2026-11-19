@@ -4,6 +4,7 @@ OAuth authentication is checked again at MCP. Uses the verified caller's
 tenant/roles; NEVER accepts actor, role or tenant parameters from model/tool.
 """
 from __future__ import annotations
+import anyio
 import json
 import os
 from datetime import datetime, timezone
@@ -76,21 +77,21 @@ def build_server(repo: ProcurementRepository | None = None):
 
 
     @mcp.tool()
-    def procurement_case_read(po_id: str) -> dict:
+    async def procurement_case_read(po_id: str) -> dict:
         """Read an approved synthetic PO, invoice and supplier certificate."""
         from phase28.fde_commercial.contracts import ensure_case
         ctx = current_context()
-        case = store.case(ctx, po_id)
+        case = await anyio.to_thread.run_sync(store.case, ctx, po_id)
         ensure_case(case, tenant_id=ctx.tenant_id, po_id=po_id)
         # Encode Decimal/date as JSON-safe strings without touching global identity.
         return json.loads(json.dumps(case, default=str))
 
     @mcp.tool()
-    def procurement_document_search(po_id: str, query: str) -> dict:
+    async def procurement_document_search(po_id: str, query: str) -> dict:
         """Search only tenant+PO-scoped procurement evidence."""
         from phase28.fde_commercial.contracts import ensure_evidence
         ctx = current_context()
-        docs = store.evidence(ctx, po_id, query)
+        docs = await anyio.to_thread.run_sync(store.evidence, ctx, po_id, query)
         ensure_evidence(docs, tenant_id=ctx.tenant_id, po_id=po_id)
         return {"documents": docs}
 
