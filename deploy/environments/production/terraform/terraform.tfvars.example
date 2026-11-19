@@ -1,0 +1,16 @@
+enabled = false
+approved_release = false
+bootstrap_mode = true # create infrastructure with zero tasks until migration
+aws_region = "us-east-2"
+vpc_id = "vpc-REPLACE"
+private_subnet_ids = ["subnet-AZ1", "subnet-AZ2"]
+private_route_table_ids = ["rtb-AZ1", "rtb-AZ2"]
+trusted_client_cidrs = []
+alb_certificate_arn = "arn:aws:acm:us-east-2:ACCOUNT:certificate/REPLACE"
+ecr_image_uri = "ACCOUNT.dkr.ecr.us-east-2.amazonaws.com/lsk-phase28@sha256:REPLACE_WITH_64_HEX_CHARS"
+bedrock_model_arn = "arn:aws:bedrock:us-east-2::foundation-model/REPLACE"
+bedrock_model_id = "REPLACE"
+jwks_secret_arn = "arn:aws:secretsmanager:us-east-2:ACCOUNT:secret:REPLACE"
+oidc_issuer = "https://REPLACE"
+oidc_audience = "lsk-phase28-api"
+live_inference_enabled = false

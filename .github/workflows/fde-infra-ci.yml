@@ -1,0 +1,46 @@
+name: fde-aws-infrastructure-validation
+on:
+  workflow_dispatch:
+  push:
+    branches: ['feature/phase28-ai-deploy']
+    paths:
+      - 'deploy/environments/pilot/**'
+      - 'deploy/environments/production/**'
+      - 'phase28/production_app.py'
+      - 'phase28/migrate_postgres.py'
+      - '.github/workflows/fde-infra-ci.yml'
+  pull_request:
+    paths:
+      - 'deploy/environments/pilot/**'
+      - 'deploy/environments/production/**'
+      - 'phase28/production_app.py'
+      - 'phase28/migrate_postgres.py'
+permissions:
+  contents: read
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Python syntax
+        run: python -m py_compile phase28/production_app.py phase28/migrate_postgres.py
+      - name: Shell syntax
+        run: |
+          bash -n deploy/environments/pilot/scripts/*.sh
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.14.0'
+      - name: Terraform validation (no cloud apply)
+        run: |
+          for env in pilot production; do
+            cd "$GITHUB_WORKSPACE/deploy/environments/$env/terraform"
+            terraform fmt -recursive
+            terraform init -backend=false -input=false
+            terraform validate
+          done

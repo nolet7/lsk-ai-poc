@@ -1,0 +1,25 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InvokeApprovedModel",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel"
+      ],
+      "Resource": [
+        "REPLACE_APPROVED_BEDROCK_MODEL_ARN"
+      ]
+    },
+    {
+      "Sid": "ReadApprovedPilotArtifact",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::REPLACE_APPROVED_ARTIFACT_BUCKET/lsk-phase28/*"
+      ]
+    }
+  ]
+}

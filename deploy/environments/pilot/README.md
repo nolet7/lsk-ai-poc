@@ -1,29 +1,25 @@
-# Pilot — controlled live AWS integration
+# Pilot — private EC2 + real Bedrock controlled rollout
 
-**Runtime already implemented:** Dockerless, private EC2 + systemd + FastAPI, using `deploy/aws/phase28_ec2/`. This is a pilot architecture, **not a production deployment**.
+**IaC added:** `terraform/` provisions an approved private EC2 instance, three interface endpoints (SSM, SSMMessages and Bedrock Runtime), optional S3 gateway endpoint, private security groups and encrypted gp3 volume. All resources are opt-in. No public IP or inbound application/SSH ports.
 
-## AWS target
-- Development account `179793764737`, region `us-east-2`.
-- Existing VPC `vpc-009da120ff1cddbf5`, private subnet `subnet-054275fd09fd75d15`.
-- Single EC2 instance, no public IP or inbound application ports.
-- SSM port forwarding for restricted access.
-- Bedrock private service access only after endpoint, IAM, model and budget approval.
+**Status:** infrastructure defined but NOT applied, and AI not verified running.
 
-## Verified vs pending
-- App code and Linux CI: complete.
-- IAM Identity Center permission set: inline policy submitted, provisioning completion not yet verified.
-- Dedicated `LSK-Phase28-EC2-Role` and instance profile: not created.
-- VPC interface endpoints, approved package access: missing from observed network.
-- EC2 launch and live Bedrock invocation: **not verified**.
-- Existing `deploy/aws/phase28_ec2/main.tf` is opt-in **diagnostic EC2** and does not install the AI app or provision endpoints.
+## Operator runbook
+1. Configure SSO permission-set status `SUCCEEDED`, then run read-only `scripts/validate-preflight.sh`.
+2. Use `scripts/bootstrap-iam.sh` with `AWS_PROFILE=lsk-development` to create only the scoped EC2 SSM role/profile. Requires the IAM permissions previously scoped to the role and profile. Existing roles should be reviewed before reuse. Authorized IAM administrator must attach the exact Bedrock/S3 permissions from `iam/bedrock-policy.template.json` after replacing placeholders.
+3. Verify approved AMI contains SSM agent and Python venv; subnet route table and VPC DNS are correct. Current VPC has no NAT or public egress; prepare offline wheels and approved signed source artifact transfer before attempting pip.
+4. From `terraform/`, copy `terraform.tfvars.example` to ignored `terraform.tfvars`. Run `terraform fmt -check`, `terraform init`, `terraform validate` and `terraform plan`. Review projected costs (interface endpoints billed hourly) and provider region. Set `enabled=true`, `approved_change=true` only after approval.
+5. `terraform apply` creates networking and EC2, **not the AI installation**. Do not expose SSH/8081.
+6. Transfer a full-SHA source checkout and offline wheelhouse using approved SSM/S3 mechanisms; follow `README_DEPLOY_AI_AWS.md`, and `deploy/aws/phase28_ec2/install-ai.sh`. Installer currently uses pip and needs approved dependency access; update install process for offline wheelhouse on isolated host.
+7. Install JWKS/RBAC/operator env, initialize and seed synthetic data, start `lsk-phase28-ai` under systemd.
+8. Use SSM port forwarding via `scripts/smoke-ssm.sh`, check `/health/ready`, signed JWT, access denial and retrieval-only.
+9. Enable inference only after IAM/model/cost approval; preserve one sanitized sample response and the pilot rollback results.
 
-## Operator sequence
-1. Confirm SSO provisioning `SUCCEEDED` and verify scoped IAM, then create approved EC2 instance role/profile.
-2. Review VPC DNS, subnet routes, endpoint SG, endpoints for SSM/SSM Messages and Bedrock Runtime; approve monthly costs.
-3. Provide signed, pinned build artifacts or reviewed offline dependencies (no internet egress currently).
-4. Review a Terraform plan and apply only with approval. Do not presume `terraform apply` installs the app.
-5. Follow `README_DEPLOY_AI_AWS.md` and `README_AI_QUICKSTART.md`; provide real OIDC issuer, JWKS and RBAC, seed **synthetic** records, install systemd service.
-6. Test health and authorization with model off. Then approve one real Bedrock request using both opt-in flags, capture sanitized audit/latency/cost evidence.
-7. Practice rollback, endpoint failure, JWT expiry and access denial.
+## Restrictions
+- No customer data or business writes.
+- Single EC2/SQLite is not HA.
+- No automatic JWKS rotation, distributed quotas or token-based USD budget.
+- SSM port forwarding is for restricted operations, not enterprise user-facing ingress.
+- Production target uses ECS Fargate + PostgreSQL, not this AMI.
 
-**Pilot exit:** evidence of real authenticated request and model result, cost review, failure handling and written go/no-go decision. This still does not establish production readiness.
+See `docs/fde/RELEASE_GATES.md` for evidence required to promote.

@@ -1,0 +1,9 @@
+enabled = false # billable only after approval
+approved_change = false
+aws_region = "us-east-2"
+vpc_id = "vpc-009da120ff1cddbf5"
+private_subnet_id = "subnet-054275fd09fd75d15"
+private_route_table_ids = ["rtb-0ce1264982fd1789b"]
+ami_id = "ami-REPLACE_WITH_APPROVED_SSM_PYTHON_IMAGE"
+existing_instance_profile_name = "LSK-Phase28-EC2-Role"
+bedrock_model_arn = "arn:aws:bedrock:us-east-2::foundation-model/REPLACE"
