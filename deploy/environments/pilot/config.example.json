@@ -1,0 +1,13 @@
+{
+  "environment": "pilot",
+  "aws_account_id": "179793764737",
+  "aws_region": "us-east-2",
+  "runtime": "private-ec2-systemd",
+  "vpc_id": "vpc-009da120ff1cddbf5",
+  "private_subnet_id": "subnet-054275fd09fd75d15",
+  "data_classification": "synthetic-only",
+  "live_inference": false,
+  "live_inference_ack": false,
+  "model_request_cap_per_day": 5,
+  "cloud_changes_allowed": false
+}
