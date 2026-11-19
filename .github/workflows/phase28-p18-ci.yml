@@ -1,0 +1,37 @@
+name: phase28-p18-supervised-offline-gates
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'phase28/**'
+      - 'deploy/aws/phase28_ec2/**'
+      - '.github/workflows/phase28-p18-ci.yml'
+  push:
+    branches: ['feature/phase28-bedrock-ai-lab']
+    paths:
+      - 'phase28/**'
+      - 'deploy/aws/phase28_ec2/**'
+      - '.github/workflows/phase28-p18-ci.yml'
+permissions:
+  contents: read
+jobs:
+  offline-linux-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-p28-13.txt
+      - name: Full offline regression tests including Linux symlink tests
+        run: python -m unittest discover -s phase28/tests -v
+      - name: P28-18 approval record tests
+        run: python -m unittest discover -s phase28/tests -p 'test_supervised_preflight.py' -v
+      - name: Shell syntax (never execute host actions in CI)
+        run: bash -n deploy/aws/phase28_ec2/host-readonly-preflight.sh deploy/aws/phase28_ec2/run-current.sh deploy/aws/phase28_ec2/prepare-venv.sh
+      - name: Python compilation
+        run: python -m py_compile phase28/supervised_preflight.py

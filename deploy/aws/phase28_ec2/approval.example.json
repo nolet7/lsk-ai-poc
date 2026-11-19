@@ -1,0 +1,12 @@
+{
+  "change_id": "CHG-REPLACE",
+  "operator": "operator-REPLACE",
+  "approved_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "account_id": "000000000000",
+  "region": "us-east-1",
+  "instance_id": "i-0123456789abcdef0",
+  "approved_at": "2026-11-19T00:00:00Z",
+  "expires_at": "2026-11-19T01:00:00Z",
+  "mode": "diagnostic-only",
+  "operator_confirmed": false
+}
