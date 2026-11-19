@@ -7,6 +7,7 @@ on:
       - 'phase28/fde_commercial/**'
       - 'phase28/tests/test_fde_commercial.py'
       - 'phase28/tests/test_fde_postgres.py'
+      - 'phase28/tests/test_fde_mcp.py'
       - 'phase28/production_app.py'
       - 'phase28/sql/002_procurement.sql'
       - '.github/workflows/fde-commercial-ci.yml'
@@ -32,7 +33,7 @@ jobs:
       - name: Install production integration dependencies
         run: python -m pip install -r requirements-p28-13.txt -r deploy/environments/production/requirements.txt
       - name: Run bounded agent and tenant boundary tests
-        run: python -m unittest phase28.tests.test_fde_commercial -v
+        run: python -m unittest phase28.tests.test_fde_commercial phase28.tests.test_fde_mcp -v
       - name: Syntax checks
         run: python -m compileall -q phase28/fde_commercial phase28/production_app.py
 
