@@ -76,7 +76,7 @@ class PostgreSQLCommercialTests(unittest.TestCase):
         repeated=self.repo.create_exception(self.buyer,self.po,"same-key",finding)
         self.assertEqual(first["exception_id"],repeated["exception_id"])
         self.assertEqual(first["status"],"pending")
-        with self.assertRaises(LookupError):
+        with self.assertRaises(PermissionError):
             self.repo.decide(self.buyer,first["exception_id"],"approved")
         with self.assertRaises(LookupError):
             self.repo.decide(CommercialContext("alice",self.tenant_a,frozenset({"procurement_reviewer"})),
