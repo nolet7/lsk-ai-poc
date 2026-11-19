@@ -2,12 +2,12 @@
   "environment": "production",
   "aws_region": "us-east-2",
   "runtime_target": "ecs-fargate",
-  "status": "design-only",
+  "status": "infrastructure-implemented-not-deployed",
   "data_classification": "approved-enterprise-data-only-after-governance",
   "required_azs": 2,
   "container_image": "REPLACE_WITH_PINNED_SIGNED_ECR_DIGEST",
-  "storage": "REQUIRES_MANAGED_DURABLE_BACKEND",
-  "oidc_jwks_rotation": "REQUIRES_IMPLEMENTATION",
-  "distributed_budget": "REQUIRES_IMPLEMENTATION",
+  "storage": "PostgreSQL-RDS-MultiAZ",
+  "oidc_jwks_rotation": "REQUIRES_OPERATIONAL_IMPLEMENTATION",
+  "distributed_budget": "PER_TENANT_REQUEST_CAP_ONLY_USD_BUDGET_PENDING",
   "cloud_changes_allowed": false
 }
